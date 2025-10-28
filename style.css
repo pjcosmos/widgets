@@ -1,82 +1,100 @@
 :root{
-  --panel:#fffaf5; --text:#3d3630; --muted:#978c82;
-  --line:#e7ddd4; --acc:#c89554; --radius:14px;
-  --shadow:0 10px 25px rgba(180,150,120,.15);
+  /* 베이지 + iOS 느낌 톤 */
+  --bg:#f6f3ef;
+  --panel:#fffbf7;
+  --text:#3a352f;
+  --muted:#8d8379;
+  --line:#e8e1d9;
+  --acc:#c89a62;
+  --radius:16px;
+  --shadow:0 14px 28px rgba(120,95,70,.13);
 }
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
 body{
-  margin:0;
-  font-family:"Pretendard", sans-serif;
-  background:transparent;
+  background:transparent; /* 노션 임베드 고려 */
   color:var(--text);
-  padding:18px;
-  display:flex;
-  justify-content:center;
-}
-.wrap-vertical{
-  width:100%;
-  max-width:580px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
+  font:14px/1.45 "Pretendard","SF Pro Text","Apple SD Gothic Neo",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  display:flex; justify-content:center; padding:18px;
 }
 
-/* ----- 달력 ----- */
-.calendar-panel{
+/* 위아래(세로) 레이아웃 고정 */
+.container{
+  width:100%; max-width:680px;
+  display:flex; flex-direction:column; gap:16px;
+}
+
+/* 공통 패널 (iOS 카드) */
+.panel{
   background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
   padding:16px;
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  border:1px solid var(--line);
 }
-.cal-header{
-  display:flex; justify-content:space-between; align-items:center;
-  font-weight:700; margin-bottom:10px;
+
+/* ========== CALENDAR ========== */
+.cal-head{
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
 }
+.cal-title{margin:0; font-size:18px; font-weight:700;}
 .cal-nav button{
-  background:transparent; border:0; font-size:18px; cursor:pointer; padding:4px;
+  border:0; background:transparent; font-size:18px; padding:6px 10px; border-radius:12px; cursor:pointer;
 }
-.weekday, .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
-.weekday div{color:var(--muted); font-size:11px; text-align:center}
+.cal-nav button:hover{ background:#00000010 }
+
+.weekday,.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+.weekday div{ text-align:center; font-size:12px; color:var(--muted); }
 .cell{
-  height:42px; border-radius:12px; border:1px solid var(--line); background:#fff;
-  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  height:44px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--line); border-radius:12px; position:relative;
 }
-.cell.today{border-color:var(--acc); box-shadow:0 0 0 2px var(--acc); font-weight:700}
+.cell.muted{opacity:.55}
+.cell.today{ border-color:var(--acc); box-shadow:0 0 0 2px color-mix(in oklab,var(--acc) 25%, transparent); font-weight:700 }
 
-/* ----- 할 일 ----- */
-.todo-panel{
-  background:var(--panel);
-  padding:18px;
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  border:1px solid var(--line);
+/* 툴팁(텍스트만) */
+.tooltip{
+  position:absolute; z-index:10; min-width:180px; max-width:260px;
+  background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); padding:10px 12px;
 }
-.form-box{
+.tooltip ul{margin:0; padding:0; list-style:none}
+.tooltip li{padding:4px 0; border-bottom:1px dashed var(--line)}
+.tooltip li:last-child{border-bottom:0}
+
+/* ========== TODO ========== */
+.input-row{
   display:grid;
-  grid-template-columns: 1fr 1fr auto auto auto;
-  gap:8px;
-  margin-bottom:14px;
+  grid-template-columns: 1fr 1.2fr 1.2fr auto auto;
+  gap:8px; margin-bottom:12px;
 }
-.form-box input, .form-box select{
+.cell{
+  border:1px solid var(--line); border-radius:12px; background:#fff;
   padding:10px 12px;
-  border-radius:10px;
-  border:1px solid var(--line);
-  background:#fff;
-  outline:none;
 }
-#dateBtn, #addBtn{
-  border:0; border-radius:10px; cursor:pointer;
-  background:var(--acc); color:#fff; font-weight:600; padding:0 12px;
+.select{ appearance:none; background:#fff; }
+.text{ outline:none; }
+.icon{ width:42px; text-align:center; font-size:18px; cursor:pointer; }
+.primary{
+  background:var(--acc); color:#fff; font-weight:700; cursor:pointer; border:0;
 }
-#todoList{list-style:none; padding:0; margin:0}
-#todoList li{
-  padding:10px 12px; border:1px solid var(--line); border-radius:10px;
-  background:#fff; margin-bottom:8px;
-  display:flex; justify-content:space-between; align-items:center;
-}
-#todoList li .text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-#todoList li button{border:0; background:transparent; cursor:pointer; color:#a33}
-.hint{text-align:center; color:var(--muted); margin-top:6px; font-size:13px;}
 
-/* Tooltip */
-.tooltip{position:absolute; background:#fff; padding:10px 12px; border-radius:10px; border:1px solid var(--line); box-shadow:var(--shadow); max-width:220px;}
+.list{list-style:none; margin:0; padding:0}
+.list li{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; margin-bottom:8px;
+}
+.list .meta{ color:var(--muted); font-size:12px; margin-left:8px }
+.btn{
+  border:0; background:transparent; cursor:pointer;
+}
+.btn.del{ color:#a33; font-weight:700 }
+
+/* 비어있을 때 */
+.empty{ text-align:center; color:var(--muted); margin-top:8px }
+
+/* 다크모드 보정(선택) */
+@media (prefers-color-scheme: dark){
+  :root{ --panel:#2e2b27; --text:#f3f0eb; --muted:#b6ab9f; --line:#4a4239; }
+  .cell, .input-row .cell, .list li{ background:#3a352f; }
+}
