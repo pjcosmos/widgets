@@ -215,13 +215,6 @@ cell.addEventListener("mouseenter", (e) => {
   tip.style.top  = `${top}px`;
 });
 
-     .tooltip{
-  will-change: left, top;
-  transition: left .06s ease, top .06s ease;
-}
-
-cell.addEventListener("mouseleave", () => { tip.hidden = true; });
-
     cell.addEventListener("mouseleave", () => { tip.hidden = true; });
 
     grid.appendChild(cell);
