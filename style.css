@@ -69,9 +69,45 @@
   .tooltip-list{margin:0; padding:0; list-style:none}
   .tooltip-list li{padding:4px 0; border-bottom:1px dashed var(--line)}
   .tooltip-list li:last-child{border-bottom:0}
-  
+
+    /* --- Responsive Fix for Notion Embed / Small Width --- */
+    @media (max-width: 780px) {
+      .wrap {
+        grid-template-columns: 1fr !important;
+      }
+      .panel {
+        width: 100% !important;
+      }
+    }
+    
+    /* 달력이 너무 붙는 문제 → 패널 간격+여백 수정 */
+    .panel.cal {
+      margin-top: 10px;
+    }
+
   @media (prefers-color-scheme: dark){
     :root{--panel:#2c2925; --text:#f6f3ee; --muted:#b5a99c; --line:#4a4239}
     .cell, #todoText, #todoDate, .item{background:#37332e}
+
   }
-  
+
+    /* --- Layout hardening: 두 패널 겹침/밀림 방지 --- */
+    .wrap{
+      /* 두 칸일 때 각 칼럼이 최소 280px은 확보되게 */
+      grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+      align-items: start;
+    }
+    .panel{ min-width: 0; } /* Notion iframe에서 내용 폭으로 밀리는 현상 방지 */
+    
+    /* --- Responsive Fix for Notion Embed / Small Width --- */
+    @media (max-width: 780px) {
+      .wrap { grid-template-columns: 1fr !important; }
+      .panel { width: 100% !important; }
+      .panel.cal { margin-top: 10px; }
+    }
+    
+    /* (참고) 다크 모드 색상은 그대로 두면 됨 */
+    @media (prefers-color-scheme: dark){
+      :root{ --panel:#2c2925; --text:#f6f3ee; --muted:#b5a99c; --line:#4a4239; }
+      .cell, #todoText, #todoDate, .item{ background:#37332e; }
+    }
