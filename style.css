@@ -94,16 +94,27 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 }
 .icon-btn:hover{background:#f3f4f6}
 
-/* 날짜 팝오버 */
-.date-wrap{ position:relative; }
-.date-pop{
-  position:absolute; top:50%; left:56px; transform:translateY(-50%);
-  border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text);
-  padding:8px 10px;
-  box-shadow:var(--shadow);
-  opacity:0; pointer-events:none; transition:.12s ease; z-index:12;
+/* --- 항상 보이는 날짜 입력 (안정 동작) --- */
+.date-inline{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
-.date-pop.show{ opacity:1; pointer-events:auto; }
+.date-inline input[type="date"]{
+  height: 44px;
+  padding: 0 10px;
+  min-width: 140px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+.date-inline input[type="date"]:focus{
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent);
+  border-color: var(--acc);
+}
+
 
 .add{
   background:var(--acc); color:#fff; border:0; border-radius:12px;
