@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Calendar + Todo (Beige)</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel todo" aria-label="할 일">
+      <header class="panel-head">
+        <h2>To-do</h2>
+      </header>
+      <form id="todoForm" class="row" autocomplete="off">
+        <input id="todoText" type="text" placeholder="할 일을 입력하고 Enter" required />
+        <input id="todoDate" type="date" required />
+        <button id="addBtn" type="submit" aria-label="추가">추가</button>
+      </form>
+      <ul id="todoList" class="list" aria-live="polite"></ul>
+      <div id="emptyHint" class="muted">남은 할 일이 없어요.</div>
+    </section>
+
+    <section class="panel cal" aria-label="미니 달력">
+      <header class="panel-head">
+        <div class="cal-title" id="calLabel">—</div>
+        <div class="nav">
+          <button id="prevMon" type="button" aria-label="이전 달">‹</button>
+          <button id="nextMon" type="button" aria-label="다음 달">›</button>
+        </div>
+      </header>
+
+      <div class="cal-box" id="calBox">
+        <div class="weekday" id="wd"></div>
+        <div class="grid" id="grid"></div>
+        <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
