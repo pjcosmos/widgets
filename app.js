@@ -172,50 +172,47 @@ function drawCalendar() {
 
     // 툴팁: 셀의 오른쪽-아래 모서리에 붙이되, 가장자리면 자동 반전
     cell.addEventListener("mouseenter", (e) => {
-      const arr = byDate[dISO] || [];
-      if (arr.length === 0) { tip.hidden = true; return; }
+  const arr = byDate[dISO] || [];
+  if (arr.length === 0) { tip.hidden = true; return; }
 
-      // 내용 구성
-      tip.innerHTML = "";
-      const ul = document.createElement("ul");
-      arr.forEach(t => {
-        const li = document.createElement("li");
-        li.textContent = t.name; // 텍스트만
-        ul.appendChild(li);
-      });
-      tip.appendChild(ul);
-      tip.hidden = false;
+  // tooltip 내용
+  tip.innerHTML = "";
+  const ul = document.createElement("ul");
+  arr.forEach(t => {
+    const li = document.createElement("li");
+    li.textContent = t.name;
+    ul.appendChild(li);
+  });
+  tip.appendChild(ul);
+  tip.hidden = false;
 
-      const gap = 8; // 셀 모서리와 툴팁 간격
-      const cellRect = e.currentTarget.getBoundingClientRect();
-      const gridRect = grid.getBoundingClientRect();
+  // === 위치 계산: card(달력 전체) 기준 ===
+  const cellRect   = e.currentTarget.getBoundingClientRect();
+  const cardRect   = grid.closest(".calendar").getBoundingClientRect(); // 부모 카드 기준
+  const tipRect    = tip.getBoundingClientRect();
+  const gap = 8;
 
-      // 기본 위치: "셀의 오른쪽-아래"
-      let left = cellRect.right - gridRect.left + gap;
-      const tipRectNow = tip.getBoundingClientRect();
-      const tipH = tipRectNow.height;
-      const tipW = Math.min(260, tipRectNow.width || 260); // max-width=260
-      let top  = cellRect.bottom - gridRect.top - tipH + gap;
+  // 기본 위치: "셀의 오른쪽-아래"
+  let left = cellRect.right - cardRect.left + gap;
+  let top  = cellRect.bottom - cardRect.top + gap;
 
-      // 가로 넘침 → 왼쪽으로 반전
-      if (left + tipW > gridRect.width - 4) {
-        left = cellRect.left - gridRect.left - gap - tipW;
-        if (left < 4) left = 4;
-      }
-      // 세로 넘침 → 위쪽으로 반전
-      if (top + tipH > gridRect.height - 4) {
-        top = cellRect.top - gridRect.top - gap;
-        if (top < 4) top = 4;
-      }
+  // 가로 넘칠 경우 → 왼쪽으로 반전
+  if (left + tipRect.width > cardRect.width - 4) {
+    left = cellRect.left - cardRect.left - tipRect.width - gap;
+  }
 
-      tip.style.left = `${left}px`;
-      tip.style.top  = `${top}px`;
-    });
+  // 세로 넘칠 경우 → 위쪽으로 반전
+  if (top + tipRect.height > cardRect.height - 4) {
+    top = cellRect.top - cardRect.top - tipRect.height - gap;
+  }
 
-    cell.addEventListener("mouseleave", () => { tip.hidden = true; });
+  tip.style.left = `${left}px`;
+  tip.style.top  = `${top}px`;
+});
 
-    grid.appendChild(cell);
-  };
+cell.addEventListener("mouseleave", () => {
+  tip.hidden = true;
+});
 
   // 이전 달
   for (let i = 0; i < start; i++) {
