@@ -26,13 +26,30 @@ const hintEl   = document.getElementById("emptyHint");
 dateIn.value = new Date().toISOString().slice(0, 10);
 
 /* 날짜 아이콘 클릭 -> 데이트피커 열기 (지원 시) */
+// 날짜 버튼 → 오늘 날짜로 즉시 추가
 dateBtn.onclick = () => {
-  if (typeof dateIn.showPicker === "function") {
-    dateIn.showPicker();
-  } else {
-    dateIn.focus(); // 일부 브라우저 fallback
-  }
+  const name = taskName.value.trim();
+  if (!name) return;
+
+  const items = load();
+  items.push({
+    id: crypto.randomUUID(),
+    subject: subject.value.trim(),
+    name,
+    memo: memo.value.trim(),
+    date: new Date().toISOString().slice(0,10), // 오늘 날짜 자동 적용
+    done: false,
+    createdAt: Date.now()
+  });
+  save(items);
+
+  taskName.value = "";
+  memo.value = "";
+
+  renderTodos();
+  drawCalendar();
 };
+
 
 /* 항목 추가 */
 function addItem() {
