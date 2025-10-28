@@ -72,6 +72,11 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 .tooltip li{padding:4px 0;border-bottom:1px dashed var(--line)}
 .tooltip li:last-child{border-bottom:0}
 
+.tooltip{
+  will-change: left, top;
+  transition: left .06s ease, top .06s ease;
+}
+
 /* ===== Todo ===== */
 /* 입력 레이아웃: 과목 | 과제명 | 메모 | 아이콘 */
 .input-box{
