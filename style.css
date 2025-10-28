@@ -73,19 +73,36 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 .tooltip li:last-child{border-bottom:0}
 
 /* ===== Todo ===== */
+/* 입력 레이아웃: 과목 | 과제명 | 메모 | 아이콘 */
 .input-box{
   display:grid;
-  grid-template-columns: 1fr 1fr 1fr auto auto;
-  gap:10px; margin-bottom:14px;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap:10px;
+  margin-bottom:14px;
 }
+
+/* “추가” 버튼은 숨김(아이콘이 역할 대체) */
+.add{ display:none; }
+
+/* 달력에서 사용자가 클릭해 고른 날짜 하이라이트 */
+.cell.selected{
+  outline: 2px solid color-mix(in oklab, var(--acc) 40%, transparent);
+  outline-offset: 2px;
+  font-weight: 700;
+}
+
 .input-box input{
   padding:11px 12px;
   border-radius:12px;
   border:1px solid var(--line);
   background:#fff; outline:none;
 }
-.input-box input:focus{box-shadow:0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent); border-color:var(--acc)}
+.input-box input:focus{
+  box-shadow:0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent);
+  border-color:var(--acc);
+}
 
+/* 아이콘 버튼(날짜=즉시추가) */
 .icon-btn{
   display:inline-flex; align-items:center; justify-content:center;
   width:44px; height:44px;
@@ -94,33 +111,10 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 }
 .icon-btn:hover{background:#f3f4f6}
 
-/* --- 항상 보이는 날짜 입력 (안정 동작) --- */
+/* 아이콘 정렬 래퍼 */
 .date-inline{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display:inline-flex; align-items:center; gap:8px;
 }
-.date-inline input[type="date"]{
-  height: 44px;
-  padding: 0 10px;
-  min-width: 140px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--text);
-  outline: none;
-}
-.date-inline input[type="date"]:focus{
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent);
-  border-color: var(--acc);
-}
-
-
-.add{
-  background:var(--acc); color:#fff; border:0; border-radius:12px;
-  padding:0 16px; font-weight:600; cursor:pointer;
-}
-.add:hover{filter:brightness(.95)}
 
 #todoList{list-style:none;margin:0;padding:0}
 #todoList li{
