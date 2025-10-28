@@ -170,41 +170,58 @@ function drawCalendar() {
     });
 
     // 툴팁: 셀 옆(우측) 기본, 공간 부족 시 좌측
-    cell.addEventListener("mouseenter", (e) => {
-      const arr = byDate[dISO] || [];
-      if (arr.length === 0) { tip.hidden = true; return; }
+    // 툴팁: 셀의 오른쪽-아래 모서리에 붙이되, 가장자리면 자동 반전
+cell.addEventListener("mouseenter", (e) => {
+  const arr = byDate[dISO] || [];
+  if (arr.length === 0) { tip.hidden = true; return; }
 
-      tip.innerHTML = "";
-      const ul = document.createElement("ul");
-      arr.forEach(t => {
-        const li = document.createElement("li");
-        li.textContent = t.name;   // 글자만
-        ul.appendChild(li);
-      });
-      tip.appendChild(ul);
-      tip.hidden = false;
+  // 내용 구성
+  tip.innerHTML = "";
+  const ul = document.createElement("ul");
+  arr.forEach(t => {
+    const li = document.createElement("li");
+    li.textContent = t.name; // 텍스트만
+    ul.appendChild(li);
+  });
+  tip.appendChild(ul);
+  tip.hidden = false;
 
-      const r = e.currentTarget.getBoundingClientRect();
-      const p = grid.getBoundingClientRect();
-      const tooltipWidth = 260;  // .tooltip max-width와 일치
-      const gap = 10;
+  const gap = 8; // 셀 모서리와 툴팁 간격
+  const cellRect = e.currentTarget.getBoundingClientRect();
+  const gridRect = grid.getBoundingClientRect();
 
-      // 기본은 오른쪽
-      let left = r.right - p.left + gap;
-      if (left + tooltipWidth > p.width) {
-        // 오른쪽 공간 부족 → 왼쪽
-        left = r.left - p.left - gap - tooltipWidth;
-        if (left < 0) left = 4;   // 그래도 부족하면 최소 보정
-      }
+  // 먼저 원하는 위치: "셀의 오른쪽-아래" (outside)
+  let left = cellRect.right - gridRect.left + gap;
+  // 아래쪽으로 붙이되, tooltip 높이를 고려해서 '셀의 하단과 거의 맞춤'
+  // (툴팁이 보이는 상태에서 측정)
+  const tipH = tip.getBoundingClientRect().height;
+  const tipW = Math.min(260, tip.getBoundingClientRect().width || 260); // max-width=260
+  let top  = cellRect.bottom - gridRect.top - tipH + gap; // 살짝 아래로
 
-      // 수직 위치(셀 상단 정렬, 하단 넘침 방지)
-      let top = r.top - p.top;
-      const maxTop = p.height - 10;
-      if (top > maxTop) top = maxTop;
+  // ---- 가로 넘침 시: 왼쪽으로 반전
+  if (left + tipW > gridRect.width - 4) {
+    left = cellRect.left - gridRect.left - gap - tipW;
+    if (left < 4) left = 4; // 최후 보정
+  }
 
-      tip.style.left = `${left}px`;
-      tip.style.top  = `${top}px`;
-    });
+  // ---- 세로 넘침 시: 위쪽으로 반전 (셀의 위-오른쪽에 붙이기)
+  if (top + tipH > gridRect.height - 4) {
+    top = cellRect.top - gridRect.top - gap; // 셀 위에
+    // 만약 위쪽도 부족하면 그리드 안쪽 최상단으로 보정
+    if (top < 4) top = 4;
+  }
+
+  tip.style.left = `${left}px`;
+  tip.style.top  = `${top}px`;
+});
+
+     .tooltip{
+  will-change: left, top;
+  transition: left .06s ease, top .06s ease;
+}
+
+cell.addEventListener("mouseleave", () => { tip.hidden = true; });
+
     cell.addEventListener("mouseleave", () => { tip.hidden = true; });
 
     grid.appendChild(cell);
