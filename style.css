@@ -66,7 +66,7 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 .tooltip{
   position:absolute; background:#fff; color:var(--text);
   border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
-  padding:10px 12px; max-width:260px; z-index:5;
+  padding:10px 12px; max-width:260px; z-index:10; pointer-events:none;
 }
 .tooltip ul{margin:0;padding:0;list-style:none}
 .tooltip li{padding:4px 0;border-bottom:1px dashed var(--line)}
@@ -78,14 +78,12 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
   grid-template-columns: 1fr 1fr 1fr auto auto;
   gap:10px; margin-bottom:14px;
 }
-.input-box select,
 .input-box input{
   padding:11px 12px;
   border-radius:12px;
   border:1px solid var(--line);
   background:#fff; outline:none;
 }
-.input-box select:focus,
 .input-box input:focus{box-shadow:0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent); border-color:var(--acc)}
 
 .icon-btn{
@@ -96,6 +94,17 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 }
 .icon-btn:hover{background:#f3f4f6}
 
+/* 날짜 팝오버 */
+.date-wrap{ position:relative; }
+.date-pop{
+  position:absolute; top:50%; left:56px; transform:translateY(-50%);
+  border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text);
+  padding:8px 10px;
+  box-shadow:var(--shadow);
+  opacity:0; pointer-events:none; transition:.12s ease; z-index:12;
+}
+.date-pop.show{ opacity:1; pointer-events:auto; }
+
 .add{
   background:var(--acc); color:#fff; border:0; border-radius:12px;
   padding:0 16px; font-weight:600; cursor:pointer;
@@ -104,14 +113,19 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 
 #todoList{list-style:none;margin:0;padding:0}
 #todoList li{
-  background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px;
-  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;
+  background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; margin-bottom:10px;
 }
+.chk{
+  width:18px;height:18px;appearance:none; border:1.8px solid var(--line); border-radius:6px; display:grid; place-content:center; cursor:pointer;
+}
+.chk:checked{ border-color:var(--acc); background:var(--acc); }
+.chk:checked::after{ content:""; width:10px;height:10px; clip-path:polygon(14% 44%,0 62%,41% 100%,100% 22%,82% 6%,39% 72%); background:#fff; }
+
 #todoList .text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #todoList .act{display:flex; gap:8px}
-#todoList button{
-  border:0; background:transparent; cursor:pointer; color:#b91c1c; font-weight:700;
-}
+#todoList .del{ border:0; background:transparent; cursor:pointer; color:#b91c1c; font-weight:700; }
+
 .hint{text-align:center;color:var(--muted);margin-top:6px;font-size:13px}
 
 /* 반응형 (노션 모바일 포함) */
