@@ -1,56 +1,55 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Study Planner</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Study Planner — Calendar + Todo</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+  <div id="app" class="container">
 
-<div class="wrap-vertical">
-
-  <!-- 달력 -->
-  <section class="calendar-panel">
-    <header class="cal-header">
-      <div id="calLabel"></div>
-      <div class="cal-nav">
-        <button id="prevMon">‹</button>
-        <button id="nextMon">›</button>
+    <!-- ⬆️ 달력(위) -->
+    <section class="panel calendar">
+      <header class="cal-head">
+        <h2 id="calLabel" class="cal-title">—</h2>
+        <div class="cal-nav">
+          <button id="prevMon" aria-label="이전 달">‹</button>
+          <button id="nextMon" aria-label="다음 달">›</button>
+        </div>
+      </header>
+      <div class="cal-body" id="calBox">
+        <div id="wd" class="weekday"></div>
+        <div id="grid" class="grid"></div>
+        <div id="tooltip" class="tooltip" hidden></div>
       </div>
-    </header>
-    <div class="cal-box">
-      <div class="weekday" id="wd"></div>
-      <div class="grid" id="grid"></div>
-      <div id="tooltip" class="tooltip" hidden></div>
-    </div>
-  </section>
+    </section>
 
-  <!-- To-do -->
-  <section class="todo-panel">
-    <div class="form-box">
-      <select id="subject">
-        <option value="AI응용">AI응용</option>
-        <option value="소프트웨어공학">소프트웨어공학</option>
-        <option value="교양">교양</option>
-      </select>
+    <!-- ⬇️ 할 일(아래) -->
+    <section class="panel todo">
+      <!-- iOS 테이블-셀 느낌의 입력바 -->
+      <div class="input-row">
+        <select id="subject" class="cell select">
+          <option>AI응용</option>
+          <option>소프트웨어공학</option>
+          <option>교양</option>
+        </select>
 
-      <input id="taskName" type="text" placeholder="과제명" />
+        <input id="taskName" class="cell text" type="text" placeholder="과제명" />
+        <input id="memo" class="cell text" type="text" placeholder="메모 (선택)" />
 
-      <input id="memo" type="text" placeholder="메모 (선택)" />
+        <!-- 달력 아이콘 버튼 한 개 → 숨긴 date input 열기 -->
+        <button id="dateBtn" class="cell icon" title="마감일 선택">📅</button>
+        <input id="todoDate" type="date" hidden />
+        <button id="addBtn" class="cell primary">추가</button>
+      </div>
 
-      <button id="dateBtn">📅</button>
-      <input id="todoDate" type="date" hidden />
-      <button id="addBtn">추가</button>
-    </div>
+      <ul id="todoList" class="list"></ul>
+      <div id="emptyHint" class="empty">할 일이 없습니다 ☕️</div>
+    </section>
+  </div>
 
-    <ul id="todoList"></ul>
-    <div id="emptyHint" class="hint">할 일이 없습니다 ☕️</div>
-  </section>
-
-</div>
-
-<script src="./app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
