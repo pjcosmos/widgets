@@ -1,14 +1,14 @@
-/* ===== Study Planner - Monotone Gray (FULL) ===== */
+/* ===== Study Planner - Monotone Gray (FINAL) ===== */
 
 /* Theme */
 :root{
-  --bg: transparent;              /* Notion 임베드 호환 */
-  --panel:#ffffff;                /* 카드 배경 */
-  --text:#1f2937;                 /* Gray 800 */
-  --muted:#6b7280;                /* Gray 500 */
-  --line:#e5e7eb;                 /* Gray 200 */
-  --acc:#374151;                  /* Gray 700 (포커스/강조) */
-  --dot:#4b5563;                  /* Gray 600 (달력 점) */
+  --bg: transparent;
+  --panel:#ffffff;
+  --text:#1f2937;   /* Gray 800 */
+  --muted:#6b7280;  /* Gray 500 */
+  --line:#e5e7eb;   /* Gray 200 */
+  --acc:#374151;    /* Gray 700 */
+  --dot:#4b5563;    /* Gray 600 */
   --radius:18px;
   --shadow:0 12px 28px rgba(0,0,0,.08);
 }
@@ -19,7 +19,7 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 /* Notion 임베드/브라우저 공통 래퍼 */
 .app{
   width:100%;
-  max-width:720px;               /* 가운데 카드 폭 */
+  max-width:720px;
   margin:0 auto;
   padding:16px 12px 40px;
   font:14px/1.5 "Pretendard", ui-sans-serif, -apple-system, "Segoe UI", "Noto Sans KR", Roboto, Arial, sans-serif;
@@ -39,6 +39,7 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 .card-head strong{font-weight:700}
 
 /* ===== Calendar ===== */
+.calendar{ position: relative; }  /* tooltip 기준점 */
 .nav button{
   border:0; background:#f9fafb; color:var(--text);
   width:34px;height:34px;border-radius:10px; cursor:pointer;
@@ -63,30 +64,27 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 .cell.hasTasks::after{
   content:""; position:absolute; bottom:6px; width:6px; height:6px; border-radius:50%; background:var(--dot);
 }
-/* 현재 선택 날짜 하이라이트 */
 .cell.selected{
   outline: 2px solid color-mix(in oklab, var(--acc) 40%, transparent);
   outline-offset: 2px;
   font-weight: 700;
 }
 
-/* Tooltip (텍스트만) */
+/* Tooltip (텍스트만) — 아래 중앙 붙음, 부드럽게 이동 */
 .tooltip{
   position:absolute; background:#fff; color:var(--text);
   border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
-  padding:10px 12px; max-width:260px; z-index:10; pointer-events:none;
-  will-change:left, top;                 /* 위치 이동 최적화 */
-  transition:left .06s ease, top .06s ease;
+  padding:10px 12px; max-width:260px; z-index:999; pointer-events:none;
+  will-change:left, top;
+  transition:left .08s ease, top .08s ease, opacity .08s ease;
+  opacity:1;
 }
-.tooltip ul{margin:0;padding:0;list-style:none}
-.tooltip li{padding:4px 0;border-bottom:1px dashed var(--line)}
-.tooltip li:last-child{border-bottom:0}
+.tooltip[hidden]{ opacity:0; }
 
 /* ===== Todo ===== */
-/* 입력 레이아웃: 과목 | 과제명 | 메모 | 날짜아이콘 */
 .input-box{
   display:grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto; /* 과목 | 과제명 | 메모 | 달력아이콘 */
   gap:10px;
   margin-bottom:14px;
 }
@@ -101,7 +99,6 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
   border-color:var(--acc);
 }
 
-/* 날짜 아이콘 버튼 (바로 추가 트리거) */
 .icon-btn{
   display:inline-flex; align-items:center; justify-content:center;
   width:44px; height:44px;
@@ -110,7 +107,7 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 }
 .icon-btn:hover{background:#f3f4f6}
 
-/* “추가” 기본 버튼은 사용하지 않으므로 숨김(안전용) */
+/* “추가” 버튼은 숨김(아이콘으로 대체) */
 .add{ display:none; }
 
 /* 목록 */
@@ -120,7 +117,6 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
   display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; margin-bottom:10px;
 }
 #todoList .text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-#todoList .act{display:flex; gap:8px}
 
 /* 체크박스 */
 .chk{
@@ -135,7 +131,7 @@ html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:v
 /* 비어있음 힌트 */
 .hint{text-align:center;color:var(--muted);margin-top:6px;font-size:13px}
 
-/* 반응형 (노션 모바일 포함) */
+/* 반응형 */
 @media (max-width:560px){
   .input-box{grid-template-columns:1fr 1fr auto}
   #memo{grid-column:1 / -1}
