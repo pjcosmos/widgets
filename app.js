@@ -1,5 +1,5 @@
 // ===== Storage =====
-const KEY = "tasks_ui_gray_v1";
+const KEY = "tasks_ui_gray_v2";
 const load = () => JSON.parse(localStorage.getItem(KEY) || "[]");
 const save = v => localStorage.setItem(KEY, JSON.stringify(v));
 
@@ -15,15 +15,24 @@ const hintEl   = document.getElementById("emptyHint");
 
 // init date = today
 dateIn.value = new Date().toISOString().slice(0,10);
-dateBtn.onclick = () => { if (dateIn.showPicker) dateIn.showPicker(); else dateIn.click(); };
 
-addBtn.onclick = () => {
+// date button -> popover toggle (Notion에서도 확실히 작동)
+dateBtn.onclick = () => {
+  dateIn.classList.toggle("show");
+  if (dateIn.classList.contains("show")) dateIn.focus();
+};
+dateIn.addEventListener("change", ()=> dateIn.classList.remove("show"));
+document.addEventListener("click", (e)=>{
+  if (!e.target.closest(".date-wrap")) dateIn.classList.remove("show");
+});
+
+function addItem(){
   const name = taskName.value.trim();
   if (!name) return;
   const items = load();
   items.push({
     id: crypto.randomUUID(),
-    subject: subject.value,
+    subject: subject.value.trim(),
     name,
     memo: memo.value.trim(),
     date: dateIn.value,            // YYYY-MM-DD
@@ -35,8 +44,11 @@ addBtn.onclick = () => {
   memo.value = "";
   renderTodos();
   drawCalendar();
-};
+}
+addBtn.onclick = addItem;
+taskName.addEventListener("keydown", e=>{ if(e.key==="Enter") addItem(); });
 
+// ===== Todo rendering =====
 function renderTodos(){
   const items = load()
     .filter(t => !t.done)
@@ -49,37 +61,39 @@ function renderTodos(){
   for (const t of items){
     const li = document.createElement("li");
 
-    const left = document.createElement("span");
-    left.className = "text";
-    left.textContent = `${t.subject} · ${t.name}${t.memo ? " · " + t.memo : ""}`;
-
-    const act = document.createElement("div");
-    act.className = "act";
-
-    const doneBtn = document.createElement("button");
-    doneBtn.textContent = "✓";
-    doneBtn.title = "완료 처리";
-    doneBtn.onclick = () => {
+    // 체크박스
+    const chk = document.createElement("input");
+    chk.type = "checkbox";
+    chk.className = "chk";
+    chk.title = "완료";
+    chk.onchange = () => {
       const all = load();
       const idx = all.findIndex(x=>x.id===t.id);
       if (idx>-1){
-        all[idx].done = true;         // 리스트에서는 사라지지만
-        save(all);                    // 달력 기록은 유지(완료도 포함해 렌더)
+        all[idx].done = true;   // 리스트에서는 제거, 달력에는 기록 유지
+        save(all);
         renderTodos();
         drawCalendar();
       }
     };
 
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "삭제";
-    delBtn.onclick = () => {
+    // 텍스트
+    const text = document.createElement("span");
+    text.className = "text";
+    const subj = t.subject ? `[${t.subject}] ` : "";
+    text.textContent = `${subj}${t.name}${t.memo ? " · " + t.memo : ""}`;
+
+    // 삭제
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "삭제";
+    del.onclick = () => {
       save(load().filter(x=>x.id!==t.id));
       renderTodos();
       drawCalendar();
     };
 
-    act.append(doneBtn, delBtn);
-    li.append(left, act);
+    li.append(chk, text, del);
     listEl.append(li);
   }
 }
@@ -92,7 +106,7 @@ const prev   = document.getElementById("prevMon");
 const next   = document.getElementById("nextMon");
 const tip    = document.getElementById("tooltip");
 
-// 월~일 헤더
+// 요일 헤더
 ["월","화","수","목","금","토","일"].forEach(w=>{
   const d=document.createElement("div");
   d.textContent=w;
@@ -132,7 +146,14 @@ function drawCalendar(){
     if (dISO === todayISO) cell.classList.add("today");
     if ((tasksByDate[dISO]||[]).length) cell.classList.add("hasTasks");
 
-    // hover tooltip
+    // 날짜 클릭 → 입력 날짜 설정
+    cell.addEventListener("click", ()=>{
+      dateIn.value = dISO;
+      // 눌렀다는 피드백: 잠깐 진하게
+      cell.animate([{transform:"scale(1)"},{transform:"scale(.96)"},{transform:"scale(1)"}],{duration:140});
+    });
+
+    // hover tooltip (셀 옆)
     cell.addEventListener("mouseenter", (e)=>{
       const arr = tasksByDate[dISO] || [];
       if (arr.length === 0){ tip.hidden = true; return; }
@@ -146,15 +167,17 @@ function drawCalendar(){
       tip.appendChild(ul);
       tip.hidden = false;
 
-      // 위치 계산 (그리드 기준)
+      // 위치: 셀 오른쪽, 경계 넘치면 왼쪽
       const r = e.currentTarget.getBoundingClientRect();
       const p = grid.getBoundingClientRect();
-      const top = r.bottom - p.top + 6;
-      let left = r.left - p.left;
-      const maxLeft = p.width - 10 - 260;
-      if (left > maxLeft) left = maxLeft;
-      tip.style.top = `${top}px`;
+      const preferredLeft = r.right - p.left + 10;
+      const leftRoom = p.width - (preferredLeft + 260 + 10);
+      const left = leftRoom >= 0
+        ? preferredLeft
+        : (r.left - p.left - 10 - 260 < 0 ? 4 : r.left - p.left - 10 - 260);
+      const top = r.top - p.top;
       tip.style.left = `${left}px`;
+      tip.style.top = `${top}px`;
     });
     cell.addEventListener("mouseleave", ()=> tip.hidden = true);
 
