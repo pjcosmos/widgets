@@ -4,11 +4,11 @@
    - 체크박스로 완료 표시 (달력 기록은 유지)
    - 날짜 아이콘 클릭 -> 선택된 날짜로 즉시 추가
    - 달력 날짜 클릭 -> 선택 날짜(selectedISO) 갱신 + 하이라이트
-   - 툴팁: 셀 옆에 표시, 가장자리면 자동 반전
+   - 툴팁: 셀 오른쪽-아래에 붙이고, 가장자리면 자동 반전
 ================================================ */
 
 /* 오늘을 기본 선택 날짜로 */
-let selectedISO = new Date().toISOString().slice(0,10);
+let selectedISO = new Date().toISOString().slice(0, 10);
 
 /* ------- Local Storage ------- */
 const KEY = "tasks_ui_gray_v2";
@@ -20,7 +20,7 @@ const subject  = document.getElementById("subject");
 const taskName = document.getElementById("taskName");
 const memo     = document.getElementById("memo");
 const dateBtn  = document.getElementById("dateBtn");   // 아이콘 버튼 = 즉시 추가
-const addBtn   = document.getElementById("addBtn");    // 숨김(안 씀)
+const addBtn   = document.getElementById("addBtn");    // 숨김(사용 안함)
 const listEl   = document.getElementById("todoList");
 const hintEl   = document.getElementById("emptyHint");
 
@@ -35,7 +35,7 @@ dateBtn.onclick = () => {
     subject: subject.value.trim(),
     name,
     memo: memo.value.trim(),
-    date: selectedISO,       // 현재 선택된 날짜
+    date: selectedISO,   // 현재 선택된 날짜
     done: false,
     createdAt: Date.now()
   });
@@ -78,7 +78,7 @@ function renderTodos() {
       const all = load();
       const idx = all.findIndex(x => x.id === t.id);
       if (idx > -1) {
-        all[idx].done = true;    // 리스트에서는 숨김, 달력 기록은 유지(byDate는 전체를 집계)
+        all[idx].done = true;    // 리스트에서만 숨김, 달력 기록은 유지
         save(all);
         renderTodos();
         drawCalendar();
@@ -121,7 +121,8 @@ const tip   = document.getElementById("tooltip");
   wdEl.appendChild(d);
 });
 
-let cur = new Date(); cur.setDate(1);
+let cur = new Date();
+cur.setDate(1);
 
 prev.onclick = () => { cur.setMonth(cur.getMonth() - 1); drawCalendar(); };
 next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
@@ -156,7 +157,7 @@ function drawCalendar() {
     const dISO = iso(d);
     if (dISO === todayISO)      cell.classList.add("today");
     if (byDate[dISO]?.length)   cell.classList.add("hasTasks");
-    if (dISO === selectedISO)   cell.classList.add("selected");  // 현재 선택 날짜 하이라이트
+    if (dISO === selectedISO)   cell.classList.add("selected");  // 선택 날짜 하이라이트
 
     // 날짜 클릭 → 선택 날짜 갱신 + 하이라이트
     cell.addEventListener("click", () => {
@@ -169,51 +170,47 @@ function drawCalendar() {
       );
     });
 
-    // 툴팁: 셀 옆(우측) 기본, 공간 부족 시 좌측
     // 툴팁: 셀의 오른쪽-아래 모서리에 붙이되, 가장자리면 자동 반전
-cell.addEventListener("mouseenter", (e) => {
-  const arr = byDate[dISO] || [];
-  if (arr.length === 0) { tip.hidden = true; return; }
+    cell.addEventListener("mouseenter", (e) => {
+      const arr = byDate[dISO] || [];
+      if (arr.length === 0) { tip.hidden = true; return; }
 
-  // 내용 구성
-  tip.innerHTML = "";
-  const ul = document.createElement("ul");
-  arr.forEach(t => {
-    const li = document.createElement("li");
-    li.textContent = t.name; // 텍스트만
-    ul.appendChild(li);
-  });
-  tip.appendChild(ul);
-  tip.hidden = false;
+      // 내용 구성
+      tip.innerHTML = "";
+      const ul = document.createElement("ul");
+      arr.forEach(t => {
+        const li = document.createElement("li");
+        li.textContent = t.name; // 텍스트만
+        ul.appendChild(li);
+      });
+      tip.appendChild(ul);
+      tip.hidden = false;
 
-  const gap = 8; // 셀 모서리와 툴팁 간격
-  const cellRect = e.currentTarget.getBoundingClientRect();
-  const gridRect = grid.getBoundingClientRect();
+      const gap = 8; // 셀 모서리와 툴팁 간격
+      const cellRect = e.currentTarget.getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
 
-  // 먼저 원하는 위치: "셀의 오른쪽-아래" (outside)
-  let left = cellRect.right - gridRect.left + gap;
-  // 아래쪽으로 붙이되, tooltip 높이를 고려해서 '셀의 하단과 거의 맞춤'
-  // (툴팁이 보이는 상태에서 측정)
-  const tipH = tip.getBoundingClientRect().height;
-  const tipW = Math.min(260, tip.getBoundingClientRect().width || 260); // max-width=260
-  let top  = cellRect.bottom - gridRect.top - tipH + gap; // 살짝 아래로
+      // 기본 위치: "셀의 오른쪽-아래"
+      let left = cellRect.right - gridRect.left + gap;
+      const tipRectNow = tip.getBoundingClientRect();
+      const tipH = tipRectNow.height;
+      const tipW = Math.min(260, tipRectNow.width || 260); // max-width=260
+      let top  = cellRect.bottom - gridRect.top - tipH + gap;
 
-  // ---- 가로 넘침 시: 왼쪽으로 반전
-  if (left + tipW > gridRect.width - 4) {
-    left = cellRect.left - gridRect.left - gap - tipW;
-    if (left < 4) left = 4; // 최후 보정
-  }
+      // 가로 넘침 → 왼쪽으로 반전
+      if (left + tipW > gridRect.width - 4) {
+        left = cellRect.left - gridRect.left - gap - tipW;
+        if (left < 4) left = 4;
+      }
+      // 세로 넘침 → 위쪽으로 반전
+      if (top + tipH > gridRect.height - 4) {
+        top = cellRect.top - gridRect.top - gap;
+        if (top < 4) top = 4;
+      }
 
-  // ---- 세로 넘침 시: 위쪽으로 반전 (셀의 위-오른쪽에 붙이기)
-  if (top + tipH > gridRect.height - 4) {
-    top = cellRect.top - gridRect.top - gap; // 셀 위에
-    // 만약 위쪽도 부족하면 그리드 안쪽 최상단으로 보정
-    if (top < 4) top = 4;
-  }
-
-  tip.style.left = `${left}px`;
-  tip.style.top  = `${top}px`;
-});
+      tip.style.left = `${left}px`;
+      tip.style.top  = `${top}px`;
+    });
 
     cell.addEventListener("mouseleave", () => { tip.hidden = true; });
 
