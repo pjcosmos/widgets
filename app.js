@@ -27,6 +27,7 @@ dateIn.value = new Date().toISOString().slice(0, 10);
 
 /* 날짜 아이콘 클릭 -> 데이트피커 열기 (지원 시) */
 // 날짜 버튼 → 오늘 날짜로 즉시 추가
+// 날짜 버튼 → 오늘 날짜로 즉시 추가
 dateBtn.onclick = () => {
   const name = taskName.value.trim();
   if (!name) return;
