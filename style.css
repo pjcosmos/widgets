@@ -1,74 +1,121 @@
+/* ===== Monotone Gray Theme ===== */
 :root{
-  --panel:#fffaf5; --text:#3c352e; --muted:#aa978a;
-  --line:#e7ddd4; --acc:#c89554; --radius:18px;
-  --shadow:0 12px 28px rgba(140,120,100,.16);
+  --bg: transparent;              /* Notion 임베드 호환 */
+  --panel:#ffffff;                /* 카드 배경 */
+  --text:#1f2937;                 /* Gray 800 */
+  --muted:#6b7280;                /* Gray 500 */
+  --line:#e5e7eb;                 /* Gray 200 */
+  --acc:#374151;                  /* Gray 700 (포커스/강조) */
+  --dot:#4b5563;                  /* Gray 600 (달력 점) */
+  --radius:18px;
+  --shadow:0 12px 28px rgba(0,0,0,.08);
 }
+
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:"Pretendard", system-ui, -apple-system, "Noto Sans KR", sans-serif;
-  background:transparent; color:var(--text);
-  display:flex; justify-content:center; padding:22px;
+html,body{width:100%;height:auto;margin:0;padding:0;background:var(--bg);color:var(--text);}
+
+/* Notion 임베드/브라우저 공통 래퍼 */
+.app{
+  width:100%;
+  max-width:720px;               /* 가운데 카드 폭 고정 */
+  margin:0 auto;
+  padding:16px 12px 40px;
+  font:14px/1.5 "Pretendard", ui-sans-serif, -apple-system, "Segoe UI", "Noto Sans KR", Roboto, Arial, sans-serif;
+  display:flex; flex-direction:column; gap:20px;
 }
-.app{ width:100%; max-width:600px; display:flex; flex-direction:column; gap:22px; }
+
+/* 공통 카드 */
+.card{
+  width:100%;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-head strong{font-weight:700}
 
 /* ===== Calendar ===== */
-.calendar{
-  background:var(--panel); border:1px solid var(--line);
-  border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
+.nav button{
+  border:0; background:#f9fafb; color:var(--text);
+  width:34px;height:34px;border-radius:10px; cursor:pointer;
+  border:1px solid var(--line);
 }
-.calendar header{ display:flex; justify-content:space-between; align-items:center; font-weight:700; margin-bottom:10px; }
-.calendar .nav button{ border:0; background:transparent; cursor:pointer; font-size:18px; }
-.weekday, .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:7px; }
-.weekday div{ font-size:11px; color:var(--muted); text-align:center; }
+.nav button:hover{background:#f3f4f6}
+
+.weekday,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.weekday div{font-size:12px;color:var(--muted);text-align:center}
+
 .cell{
-  height:44px; border-radius:14px; border:1px solid var(--line); background:#fff;
-  display:flex; align-items:center; justify-content:center; position:relative; cursor:default;
+  height:46px;border-radius:12px;border:1px solid var(--line);
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  position:relative; user-select:none;
 }
-.cell.today{ border-color:var(--acc); box-shadow:0 0 0 2px var(--acc); font-weight:700; }
+.cell.today{
+  border-color:var(--acc);
+  box-shadow:0 0 0 2px color-mix(in oklab, var(--acc) 30%, transparent);
+  font-weight:700;
+}
+.cell.muted{opacity:.55}
 .cell.hasTasks::after{
-  content:""; position:absolute; bottom:6px; width:6px; height:6px; border-radius:50%; background:var(--acc);
+  content:""; position:absolute; bottom:6px; width:6px; height:6px; border-radius:50%; background:var(--dot);
 }
 
-/* Tooltip */
+/* Tooltip (텍스트만) */
 .tooltip{
-  position:absolute; background:#fff; border:1px solid var(--line); border-radius:12px;
-  box-shadow:var(--shadow); padding:10px 12px; max-width:240px; z-index:5;
+  position:absolute; background:#fff; color:var(--text);
+  border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
+  padding:10px 12px; max-width:260px; z-index:5;
 }
-.tooltip ul{ margin:0; padding:0; list-style:none; }
-.tooltip li{ padding:4px 0; border-bottom:1px dashed var(--line); }
-.tooltip li:last-child{ border-bottom:0; }
+.tooltip ul{margin:0;padding:0;list-style:none}
+.tooltip li{padding:4px 0;border-bottom:1px dashed var(--line)}
+.tooltip li:last-child{border-bottom:0}
 
 /* ===== Todo ===== */
-.todo{
-  background:var(--panel); border:1px solid var(--line);
-  border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
-}
 .input-box{
-  display:grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap:8px; margin-bottom:16px;
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr auto auto;
+  gap:10px; margin-bottom:14px;
 }
-.input-box select, .input-box input{
-  padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#fff; outline:none;
+.input-box select,
+.input-box input{
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#fff; outline:none;
 }
+.input-box select:focus,
+.input-box input:focus{box-shadow:0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent); border-color:var(--acc)}
+
 .icon-btn{
   display:inline-flex; align-items:center; justify-content:center;
-  width:42px; border:1px solid var(--line); background:#fff; border-radius:12px; cursor:pointer;
+  width:44px; height:44px;
+  border:1px solid var(--line); background:#fff; border-radius:12px; cursor:pointer;
+  color:#334155;
 }
-.add{ background:var(--acc); color:#fff; border:0; border-radius:12px; padding:0 14px; font-weight:600; cursor:pointer; }
+.icon-btn:hover{background:#f3f4f6}
 
-#todoList{ list-style:none; padding:0; margin:0; }
+.add{
+  background:var(--acc); color:#fff; border:0; border-radius:12px;
+  padding:0 16px; font-weight:600; cursor:pointer;
+}
+.add:hover{filter:brightness(.95)}
+
+#todoList{list-style:none;margin:0;padding:0}
 #todoList li{
   background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px;
-  display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;
 }
-#todoList .text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#todoList .act{ display:flex; gap:8px; }
-#todoList button{ border:0; background:transparent; cursor:pointer; color:#a33; font-weight:700; }
+#todoList .text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#todoList .act{display:flex; gap:8px}
+#todoList button{
+  border:0; background:transparent; cursor:pointer; color:#b91c1c; font-weight:700;
+}
+.hint{text-align:center;color:var(--muted);margin-top:6px;font-size:13px}
 
-.hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px; }
-
-/* Responsive */
-@media (max-width: 560px){
-  .input-box{ grid-template-columns: 1fr 1fr auto; }
-  #memo{ grid-column: 1 / -1; }
+/* 반응형 (노션 모바일 포함) */
+@media (max-width:560px){
+  .input-box{grid-template-columns:1fr 1fr auto}
+  #memo{grid-column:1 / -1}
 }
