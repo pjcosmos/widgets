@@ -29,19 +29,20 @@
     <!-- Todo (아래) -->
     <section class="todo card">
       <div class="input-box">
-        <input id="subject" type="text" placeholder="과목 입력" aria-label="과목" />
-
-
+        <input id="subject" type="text" placeholder="과목" aria-label="과목">
         <input id="taskName" type="text" placeholder="과제명" aria-label="과제명">
         <input id="memo" type="text" placeholder="메모 (선택)" aria-label="메모">
 
-        <button id="dateBtn" class="icon-btn" type="button" aria-label="마감일 선택">
-          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
-            <path d="M8 2v4M16 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <input id="todoDate" type="date" hidden />
+        <!-- 날짜 버튼 + 팝오버 -->
+        <div class="date-wrap">
+          <button id="dateBtn" class="icon-btn" type="button" aria-label="마감일 선택">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M8 2v4M16 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <input id="todoDate" type="date" class="date-pop" />
+        </div>
 
         <button id="addBtn" class="add" type="button">추가</button>
       </div>
