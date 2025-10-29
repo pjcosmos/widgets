@@ -1,4 +1,4 @@
-/* ===== Study Planner - LocalStorage Version (Calendar Bug Fixed) ===== */
+/* ===== Study Planner - Transparent Notion (BUG FIXED) ===== */
 
 // ---------- State ----------
 let tasks = [];
@@ -25,56 +25,32 @@ const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xx
 const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10);
 
 // ---------- Data Persistence ----------
-function saveTasks() {
-  localStorage.setItem('plannerTasks', JSON.stringify(tasks));
-}
-
-function loadTasks() {
-  const savedTasks = localStorage.getItem('plannerTasks');
-  return savedTasks ? JSON.parse(savedTasks) : [];
-}
+const saveTasks = () => localStorage.setItem('plannerTasks', JSON.stringify(tasks));
+const loadTasks = () => JSON.parse(localStorage.getItem('plannerTasks') || '[]');
 
 // ---------- CRUD ----------
 function addOrUpdateTask() {
   const name = taskName.value.trim();
-  if (!name) {
-    alert("과제명은 필수입니다.");
-    return;
-  }
+  if (!name) return alert("과제명은 필수입니다.");
 
   if (currentEditingId) {
     const task = tasks.find(t => t.id === currentEditingId);
-    if (task) {
-      task.subject = subject.value.trim();
-      task.name = name;
-      task.memo = memo.value.trim();
-      task.date = selectedISO;
-    }
+    if (task) Object.assign(task, { subject: subject.value.trim(), name, memo: memo.value.trim(), date: selectedISO });
     currentEditingId = null;
   } else {
-    tasks.push({
-      id: uuid(),
-      subject: subject.value.trim(),
-      name,
-      memo: memo.value.trim(),
-      date: selectedISO,
-      done: false,
-      createdAt: Date.now()
-    });
+    tasks.push({ id: uuid(), subject: subject.value.trim(), name, memo: memo.value.trim(), date: selectedISO, done: false, createdAt: Date.now() });
   }
 
   saveTasks();
   renderAll();
-  subject.value = "";
-  taskName.value = "";
-  memo.value = "";
+  subject.value = ""; taskName.value = ""; memo.value = "";
   taskName.focus();
 }
 
-function toggleTask(id, isDone) {
+function toggleTask(id) {
   const task = tasks.find(t => t.id === id);
   if (task) {
-    task.done = isDone;
+    task.done = !task.done;
     saveTasks();
     renderAll();
   }
@@ -99,42 +75,25 @@ function enterEditMode(task) {
 }
 
 // ---------- UI Rendering ----------
-function renderAll() {
-  renderTodos();
-  drawCalendar();
-}
+const renderAll = () => { renderTodos(); drawCalendar(); };
 
 function renderTodos() {
-  const items = tasks
-    .filter(t => !t.done)
-    .sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.createdAt || 0) - (b.createdAt || 0));
-
+  const items = tasks.filter(t => !t.done).sort((a, b) => (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt);
   listEl.innerHTML = "";
   hintEl.style.display = items.length === 0 ? "block" : "none";
 
-  for (const t of items) {
+  items.forEach(t => {
     const li = document.createElement("li");
-    const chk = document.createElement("input");
-    chk.type = "checkbox"; chk.className = "chk"; chk.checked = t.done;
-    chk.onchange = () => toggleTask(t.id, chk.checked);
-
-    const text = document.createElement("span");
-    text.className = "text";
-    const subj = t.subject ? `[${t.subject}] ` : "";
-    const dateStr = t.date ? `${t.date.slice(5).replace('-', '/')} ` : '';
-    text.textContent = `${dateStr}${subj}${t.name}${t.memo ? " · " + t.memo : ""}`;
-
-    const editBtn = document.createElement("button");
-    editBtn.className = "edit-btn"; editBtn.textContent = "수정";
-    editBtn.onclick = () => enterEditMode(t);
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "del-btn"; delBtn.textContent = "삭제";
-    delBtn.onclick = () => deleteTask(t.id);
-
-    li.append(chk, text, editBtn, delBtn);
+    li.innerHTML = `
+      <input type="checkbox" class="chk" onchange="toggleTask('${t.id}')">
+      <span class="text">${t.date ? `${t.date.slice(5).replace('-', '/')} ` : ''}${t.subject ? `[${t.subject}] ` : ''}${t.name}${t.memo ? ` · ${t.memo}` : ''}</span>
+      <button class="edit-btn">수정</button>
+      <button class="del-btn">삭제</button>
+    `;
+    li.querySelector('.edit-btn').onclick = () => enterEditMode(t);
+    li.querySelector('.del-btn').onclick = () => deleteTask(t.id);
     listEl.append(li);
-  }
+  });
 }
 
 function drawCalendar() {
@@ -142,63 +101,49 @@ function drawCalendar() {
   label.textContent = new Intl.DateTimeFormat("ko", { year: "numeric", month: "long" }).format(cur);
 
   const y = cur.getFullYear(), m = cur.getMonth();
-  const start = (new Date(y, m, 1).getDay() + 6) % 7;
-  const last = new Date(y, m + 1, 0).getDate();
-  const prevLast = new Date(y, m, 0).getDate();
-  const todayISO = iso(new Date());
+  const firstDay = new Date(y, m, 1);
+  const lastDay = new Date(y, m + 1, 0);
+  const startDay = (firstDay.getDay() + 6) % 7; // 월요일=0
 
   const byDate = tasks.reduce((acc, t) => {
     if (t.date) (acc[t.date] ||= []).push(t);
     return acc;
   }, {});
 
-  const addCell = (n, d, muted) => {
+  const calendarDays = [];
+  // 이전 달
+  for (let i = startDay; i > 0; i--) {
+    const d = new Date(y, m, 1 - i);
+    calendarDays.push({ date: d, muted: true });
+  }
+  // 현재 달
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const d = new Date(y, m, i);
+    calendarDays.push({ date: d, muted: false });
+  }
+  // 다음 달
+  const remaining = 42 - calendarDays.length;
+  for (let i = 1; i <= remaining; i++) {
+    const d = new Date(y, m + 1, i);
+    calendarDays.push({ date: d, muted: true });
+  }
+
+  calendarDays.forEach(day => {
+    const dISO = iso(day.date);
     const cell = document.createElement("div");
-    cell.className = "cell" + (muted ? " muted" : "");
-    cell.textContent = String(n);
-
-    const dISO = iso(d);
-    if (dISO === todayISO) cell.classList.add("today");
-    if (byDate[dISO]?.length) cell.classList.add("hasTasks");
-    if (dISO === selectedISO) cell.classList.add("selected");
-
+    cell.className = `cell ${day.muted ? 'muted' : ''} ${dISO === iso(new Date()) ? 'today' : ''} ${dISO === selectedISO ? 'selected' : ''} ${byDate[dISO] ? 'hasTasks' : ''}`;
+    cell.textContent = day.date.getDate();
     cell.onclick = () => { selectedISO = dISO; drawCalendar(); };
-
-    cell.onmouseenter = (e) => {
-      const arr = byDate[dISO] || [];
-      if (arr.length === 0) { tip.hidden = true; return; }
-      tip.innerHTML = `<ul>${arr.map(t => `<li style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${t.name}</li>`).join('')}</ul>`;
-      tip.hidden = false;
-      const { top, left } = calculateTooltipPosition(e.currentTarget, tip);
-      tip.style.left = `${left}px`;
-      tip.style.top = `${top}px`;
-    };
-    cell.onmouseleave = () => { tip.hidden = true; };
-    grid.appendChild(cell);
-  };
-
-  for (let i = start - 1; i >= 0; i--) addCell(prevLast - i, new Date(y, m - 1, prevLast - i), true);
-  for (let d = 1; d <= last; d++) addCell(d, new Date(y, m, d), false);
-  const tail = 42 - (start + last); // 6-week grid
-  for (let i = 1; i <= tail; i++) addCell(i, new Date(y, m + 1, i), true);
+    grid.append(cell);
+  });
 }
 
-function calculateTooltipPosition(cell, tooltip) {
-    const gap = 8, cellRect = cell.getBoundingClientRect(), cardRect = grid.closest(".calendar").getBoundingClientRect(), tipRect = tooltip.getBoundingClientRect();
-    let left = cellRect.left + cellRect.width / 2 - cardRect.left - tipRect.width / 2;
-    let top = cellRect.bottom - cardRect.top + gap;
-    left = Math.max(4, Math.min(left, cardRect.width - tipRect.width - 4));
-    if (top + tipRect.height > cardRect.height - 4) top = cellRect.top - cardRect.top - tipRect.height - gap;
-    return { top, left };
-}
 
 // ---------- Initializer ----------
 function init() {
   wdEl.innerHTML = "";
   ["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
-    const d = document.createElement("div");
-    d.textContent = w;
-    wdEl.appendChild(d);
+    const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
   });
   
   dateBtn.onclick = addOrUpdateTask;
@@ -206,7 +151,6 @@ function init() {
   memo.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
   prev.onclick = () => { cur.setMonth(cur.getMonth() - 1); drawCalendar(); };
   next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
-  document.addEventListener("click", e => !grid.contains(e.target) && (tip.hidden = true));
 
   tasks = loadTasks();
   renderAll();
