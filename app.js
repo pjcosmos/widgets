@@ -83,7 +83,9 @@ function enterEditMode(task) {
 const renderAll = () => { renderTodos(); drawCalendar(); };
 
 function renderTodos() {
-  const items = tasks.filter(t => !t.done).sort((a, b) => (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt);
+  const items = tasks.filter(t => !t.done)
+    .sort((a, b) => (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt);
+
   listEl.innerHTML = "";
   hintEl.style.display = items.length === 0 ? "block" : "none";
 
@@ -92,19 +94,55 @@ function renderTodos() {
     const subjText = t.subject ? `[${t.subject}] ` : '';
     const dateText = t.date ? `${t.date.slice(5).replace('-', '/')} ` : '';
     const memoText = t.memo ? ` · ${t.memo}` : '';
-    
+
     li.innerHTML = `
       <input type="checkbox" class="chk">
       <span class="text">${dateText}${subjText}${t.name}${memoText}</span>
       <button class="edit-btn">수정</button>
       <button class="del-btn">삭제</button>
     `;
+
     li.querySelector('.chk').onchange = () => toggleTask(t.id);
     li.querySelector('.edit-btn').onclick = () => enterEditMode(t);
-    li.querySelector('.del-btn').onclick = () => deleteTask(t.id);
+
+    const delBtn = li.querySelector('.del-btn');
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      askDeleteConfirm(delBtn, t.id);
+    };
+
     listEl.append(li);
   });
 }
+
+function askDeleteConfirm(btn, id) {
+  // 이미 확인 상태면 바로 삭제
+  if (btn.dataset.confirming === "1") {
+    performDelete(id);
+    return;
+  }
+
+  // 1차 클릭: "확인" 상태로 2초 유지
+  btn.dataset.confirming = "1";
+  const prevText = btn.textContent;
+  btn.textContent = "확인";
+  btn.classList.add("confirming");
+
+  // 2초 후 자동 복구
+  clearTimeout(btn._confirmT);
+  btn._confirmT = setTimeout(() => {
+    btn.dataset.confirming = "0";
+    btn.textContent = prevText;
+    btn.classList.remove("confirming");
+  }, 2000);
+}
+
+function performDelete(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  renderAll();
+}
+
 
 function drawCalendar() {
   grid.innerHTML = "";
