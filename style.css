@@ -81,7 +81,7 @@ body {
 }
 @media (prefers-color-scheme: dark) { .cell.selected { color: #000; }}
 
-/* ✅ 툴팁 스타일 수정 */
+/* ✅ 툴팁 스타일 (최종 수정) */
 .tooltip {
   position: absolute;
   z-index: 10;
@@ -92,22 +92,21 @@ body {
   font-size: 13px;
   line-height: 1.4;
   max-width: 240px;
-  pointer-events: none;
   box-shadow: 0 4px 12px rgba(0,0,0,.15);
   white-space: normal;
   
-  /* ✅ 표시/숨김 제어 */
+  /* ✅ 표시/숨김 제어 (visibility 제거) */
   opacity: 0;
-  visibility: hidden;
+  pointer-events: none; /* 숨겨졌을 때 클릭 안 되게 */
   transform: translateY(5px);
-  transition: opacity .1s ease, transform .1s ease, visibility .1s ease;
+  transition: opacity .1s ease, transform .1s ease;
 }
 @media (prefers-color-scheme: dark) { .tooltip { color: #000; }}
 
 /* ✅ .visible 클래스가 붙었을 때 보이도록 변경 */
 .tooltip.visible {
   opacity: 1;
-  visibility: visible;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
