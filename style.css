@@ -7,7 +7,13 @@
   --radius: 16px;
   --shadow: 0 4px 16px rgba(0, 0, 0, .08);
 }
-/* 다크모드 변수 */
+/* 다크모드 변수 */.del-btn.confirming {
+  color: #fff !important;
+  background: #e57373;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #eee;
