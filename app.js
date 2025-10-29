@@ -8,25 +8,26 @@ let cur = new Date(); cur.setDate(1);
 let activeTab = 'active'; // 'active' | 'done'
 
 // ---------- DOM refs ----------
-const subject  = document.getElementById("subject");
-const taskName = document.getElementById("taskName");
-const memo     = document.getElementById("memo");
-const dateBtn  = document.getElementById("dateBtn");
+const subject      = document.getElementById("subject");
+const taskName     = document.getElementById("taskName");
+const memo         = document.getElementById("memo");
+const dateBtn      = document.getElementById("dateBtn");
+const dateInput    = document.getElementById("dateInput"); // ✅ 날짜 입력
 
-const listEl   = document.getElementById("todoList");
-const hintEl   = document.getElementById("emptyHint");
+const listEl       = document.getElementById("todoList");
+const hintEl       = document.getElementById("emptyHint");
 
-const doneListEl     = document.getElementById("doneList");
-const emptyDoneHint  = document.getElementById("emptyDoneHint");
+const doneListEl   = document.getElementById("doneList");
+const emptyDoneHint= document.getElementById("emptyDoneHint");
 
-const grid     = document.getElementById("grid");
-const label    = document.getElementById("calLabel");
-const prev     = document.getElementById("prevMon");
-const next     = document.getElementById("nextMon");
-const wdEl     = document.getElementById("wd");
-const tooltip  = document.getElementById("tooltip");
+const grid         = document.getElementById("grid");
+const label        = document.getElementById("calLabel");
+const prev         = document.getElementById("prevMon");
+const next         = document.getElementById("nextMon");
+const wdEl         = document.getElementById("wd");
+const tooltip      = document.getElementById("tooltip");
 
-const inputBox = document.getElementById("inputBox");
+const inputBox     = document.getElementById("inputBox");
 const tabActiveBtn = document.getElementById("tabActive");
 const tabDoneBtn   = document.getElementById("tabDone");
 
@@ -50,13 +51,16 @@ function addOrUpdateTask(){
   const name = taskName.value.trim();
   if (!name) return alert("과제명은 필수입니다.");
 
+  // ✅ dateInput 우선, 비어있으면 selectedISO
+  const chosenDate = (dateInput.value || selectedISO);
+
   if (currentEditingId){
     const t = tasks.find(x => x.id === currentEditingId);
     if (t) Object.assign(t, {
       subject: subject.value.trim(),
       name,
       memo: memo.value.trim(),
-      date: selectedISO
+      date: chosenDate
     });
     currentEditingId = null;
   } else {
@@ -65,14 +69,18 @@ function addOrUpdateTask(){
       subject: subject.value.trim(),
       name,
       memo: memo.value.trim(),
-      date: selectedISO,
+      date: chosenDate,
       done: false,
       createdAt: Date.now()
     });
   }
+  // ✅ state 동기화
+  selectedISO = chosenDate;
   saveTasks();
   renderAll();
+
   subject.value = ""; taskName.value = ""; memo.value = "";
+  // 새로 추가할 때 날짜는 유지(연속 입력 편의)
   taskName.focus();
 }
 
@@ -84,7 +92,7 @@ function toggleTask(id){
   renderAll();
 }
 
-// Notion confirm 대체: 2단계 확인
+// 2단계 삭제 확인
 function askDeleteConfirm(btn, id){
   if (btn.dataset.confirming === "1"){ performDelete(id); return; }
   btn.dataset.confirming = "1";
@@ -109,6 +117,7 @@ function enterEditMode(t){
   taskName.value = t.name || "";
   memo.value = t.memo || "";
   selectedISO = t.date;
+  dateInput.value = t.date || "";    // ✅ 편집 시 날짜 필드 채우기
   currentEditingId = t.id;
   taskName.focus();
   drawCalendar();
@@ -125,7 +134,7 @@ function sortByDateThenCreated(a,b){
 function renderActiveList(){
   const items = tasks.filter(t => !t.done).sort(sortByDateThenCreated);
   listEl.innerHTML = "";
-  hintEl.hidden = items.length !== 0 ? true : false;
+  hintEl.hidden = items.length !== 0;
 
   items.forEach(t => {
     const li = document.createElement("li");
@@ -152,7 +161,7 @@ function renderActiveList(){
 function renderDoneList(){
   const items = tasks.filter(t => t.done).sort(sortByDateThenCreated);
   doneListEl.innerHTML = "";
-  emptyDoneHint.hidden = items.length !== 0 ? true : false;
+  emptyDoneHint.hidden = items.length !== 0;
 
   items.forEach(t => {
     const li = document.createElement("li");
@@ -166,9 +175,7 @@ function renderDoneList(){
       <button class="edit-btn" title="수정">수정</button>
       <button class="del-btn" title="삭제">삭제</button>
     `;
-    // 체크 해제 → 다시 활성 리스트로 이동
     li.querySelector(".chk").onchange = () => toggleTask(t.id);
-    // 완료된 것도 수정 가능(체크 해제 후 다시 추가해도 되고, 그대로 편집 가능)
     li.querySelector(".edit-btn").onclick = () => enterEditMode(t);
     const delBtn = li.querySelector(".del-btn");
     delBtn.onclick = (e) => { e.stopPropagation(); askDeleteConfirm(delBtn, t.id); };
@@ -177,7 +184,7 @@ function renderDoneList(){
   });
 }
 
-// Calendar 그대로
+// Calendar
 function drawCalendar(){
   grid.innerHTML = "";
   label.textContent = new Intl.DateTimeFormat("ko", {year:"numeric", month:"long"}).format(cur);
@@ -211,12 +218,17 @@ function drawCalendar(){
     }
 
     cell.textContent = d.getDate();
-    cell.onclick = () => { selectedISO = dISO; drawCalendar(); };
+    cell.onclick = () => {
+      selectedISO = dISO;
+      // ✅ 달력 클릭 시 dateInput 동기화
+      dateInput.value = dISO;
+      drawCalendar();
+    };
     grid.appendChild(cell);
   }
 }
 
-// Tooltip (viewport-fixed)
+// Tooltip
 function showTooltip(cell, tasksForDay){
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
   tooltip.style.position = 'fixed';
@@ -244,11 +256,9 @@ function setTab(tab){
   updateTabView();
 }
 function updateTabView(){
-  // 탭 버튼 상태
   tabActiveBtn.classList.toggle('active', activeTab === 'active');
   tabDoneBtn.classList.toggle('active', activeTab === 'done');
 
-  // 입력 박스 / 리스트 토글
   inputBox.hidden   = (activeTab !== 'active');
   listEl.hidden     = (activeTab !== 'active');
   hintEl.hidden     = (activeTab !== 'active') ? true : (listEl.children.length !== 0);
@@ -260,6 +270,16 @@ function updateTabView(){
 // ---------- Init ----------
 function init(){
   selectedISO = iso(new Date());
+  dateInput.value = selectedISO;             // ✅ 초기값 세팅
+
+  // 날짜 입력 직접 변경 시에도 state 동기화
+  dateInput.addEventListener('change', () => {
+    if (dateInput.value){
+      selectedISO = dateInput.value;
+      drawCalendar();
+    }
+  });
+
   wdEl.innerHTML = "";
   ["월","화","수","목","금","토","일"].forEach(w=>{
     const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
@@ -269,11 +289,11 @@ function init(){
   const onEnter = e => { if (e.key === "Enter") addOrUpdateTask(); };
   taskName.addEventListener("keydown", onEnter);
   memo.addEventListener("keydown", onEnter);
+  subject.addEventListener("keydown", (e)=>{ if (e.key==="Enter") taskName.focus(); });
 
   prev.onclick = () => { cur.setMonth(cur.getMonth()-1); drawCalendar(); };
   next.onclick = () => { cur.setMonth(cur.getMonth()+1); drawCalendar(); };
 
-  // 탭 이벤트
   tabActiveBtn.onclick = () => setTab('active');
   tabDoneBtn.onclick   = () => setTab('done');
 
