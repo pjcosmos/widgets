@@ -233,6 +233,65 @@ function drawCalendar() {
   for (let i = 1; i <= tail; i++) addCell(i, new Date(y, m + 1, i), true);
 }
 
+/* ===== Export / Import (JSON 백업) ===== */
+const exportBtn = document.getElementById('exportBtn');
+const importFile = document.getElementById('importFile');
+
+function exportTasks(){
+  const data = load();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'study-planner-tasks.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function safeArray(v){ return Array.isArray(v) ? v : []; }
+function mergeById(oldArr, newArr){
+  const map = new Map(oldArr.map(x => [x.id, x]));
+  for (const n of newArr){
+    if (!n || !n.id) continue;
+    // 기본 필드 보정
+    map.set(n.id, {
+      id: n.id,
+      subject: n.subject || '',
+      name: n.name || '',
+      memo: n.memo || '',
+      date: n.date || '',
+      done: !!n.done,
+      createdAt: Number(n.createdAt) || Date.now()
+    });
+  }
+  return [...map.values()];
+}
+
+function importTasks(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      const merged = mergeById(load(), safeArray(parsed));
+      save(merged);
+      renderTodos();
+      drawCalendar();
+      alert('가져오기가 완료되었습니다.');
+    }catch(e){
+      alert('가져오기 실패: JSON 형식이 올바르지 않습니다.');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+if (exportBtn) exportBtn.onclick = exportTasks;
+if (importFile) importFile.onchange = (e) => {
+  const f = e.target.files?.[0];
+  if (f) importTasks(f);
+  e.target.value = ''; // 동일 파일 재선택 가능하게
+};
+
 /* 초기화 */
 renderTodos();
 drawCalendar();
