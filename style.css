@@ -215,6 +215,14 @@ body{
 }
 .ghost:hover{ transform: translateY(-1px); }
 
+#todoList .del:nth-of-type(1) {
+  color:#4b4b4b; /* 수정 버튼 */
+}
+#todoList .del:nth-of-type(2) {
+  color:#b32a2a; /* 삭제 버튼 */
+}
+
+
 /* 반응형 */
 @media (max-width:560px){
   .input-box{grid-template-columns:1fr 1fr auto}
