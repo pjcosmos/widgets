@@ -1,4 +1,4 @@
-/* ===== Study Planner - DEBUGGING VERSION ===== */
+/* ===== Study Planner - Final Version (Tooltip Bug Fixed) ===== */
 
 // ---------- State ----------
 let tasks = [];
@@ -146,48 +146,34 @@ function drawCalendar() {
   }
 }
 
-// ✅ 점검용 코드가 추가된 툴팁 함수
+// ✅ 툴팁 보여주기 함수 (최종 수정)
 function showTooltip(cell, tasksForDay) {
-  console.log("--- 툴팁 표시 시도 ---");
-  console.log("대상 날짜:", cell.textContent, "일");
-  console.log("오늘의 할 일:", tasksForDay);
-
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
+  const cellRect = cell.getBoundingClientRect();
+  const calendarRect = cell.closest('.calendar').getBoundingClientRect();
+  
+  // 위치를 먼저 계산한 후, 보이게 만듭니다.
+  let top = cellRect.bottom - calendarRect.top + 8;
+  let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
+  
+  if (left < 5) left = 5;
+  if (left + tooltip.offsetWidth > calendarRect.width) {
+    left = calendarRect.width - tooltip.offsetWidth - 5;
+  }
+  if (top + tooltip.offsetHeight > calendarRect.height - 10) {
+    top = cellRect.top - calendarRect.top - tooltip.offsetHeight - 8;
+  }
+  
+  tooltip.style.top = `${top}px`;
+  tooltip.style.left = `${left}px`;
   tooltip.classList.add('visible');
-
-  requestAnimationFrame(() => {
-    const cellRect = cell.getBoundingClientRect();
-    const calendarRect = cell.closest('.calendar').getBoundingClientRect();
-    
-    console.log("툴팁 너비:", tooltip.offsetWidth, "px");
-    
-    if (tooltip.offsetWidth === 0) {
-      console.error("오류: 툴팁의 너비가 0입니다. 위치를 계산할 수 없습니다.");
-      return;
-    }
-
-    let top = cellRect.bottom - calendarRect.top + 8;
-    let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
-
-    if (left < 5) left = 5;
-    if (left + tooltip.offsetWidth > calendarRect.width) {
-      left = calendarRect.width - tooltip.offsetWidth - 5;
-    }
-    
-    if (top + tooltip.offsetHeight > calendarRect.height - 10) {
-      top = cellRect.top - calendarRect.top - tooltip.offsetHeight - 8;
-    }
-    
-    tooltip.style.top = `${top}px`;
-    tooltip.style.left = `${left}px`;
-    console.log("최종 위치:", {top, left});
-    console.log("--------------------");
-  });
 }
 
+// ✅ 툴팁 숨기기 함수 (최종 수정)
 function hideTooltip() {
   tooltip.classList.remove('visible');
 }
+
 
 // ---------- Initializer ----------
 function init() {
