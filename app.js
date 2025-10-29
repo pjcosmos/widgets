@@ -1,8 +1,7 @@
-/* ===== Study Planner - Leopard Edition (FINAL)
-   - Tooltip: position:fixed (viewport-based) → 정확히 셀 아래/위
+/* ===== Study Planner - Leopard Edition (FINAL) =====
+   - Tooltip: viewport-fixed + transform-safe fallback
    - Delete: 2단계 확인 버튼 (Notion 임베드 호환)
-   - 기존 기능 변경 없음
-================================================ */
+==================================================== */
 
 /* ---------- State ---------- */
 let tasks = [];
@@ -39,7 +38,7 @@ const iso = d => {
   return `${y}-${m}-${dd}`;
 };
 
-/* ---------- Data ---------- */
+/* ---------- Storage ---------- */
 const saveTasks = () => localStorage.setItem('plannerTasks', JSON.stringify(tasks));
 const loadTasks = () => JSON.parse(localStorage.getItem('plannerTasks') || '[]');
 
@@ -68,7 +67,6 @@ function addOrUpdateTask(){
       createdAt: Date.now()
     });
   }
-
   saveTasks();
   renderAll();
   subject.value = ""; taskName.value = ""; memo.value = "";
@@ -79,16 +77,12 @@ function toggleTask(id){
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.done = !t.done;
-  saveTasks();
-  renderAll();
+  saveTasks(); renderAll();
 }
 
-/* Notion 임베드: confirm 제한 → 2단계 클릭 확인 */
+/* Notion 임베드 confirm 회피: 2단계 확인 */
 function askDeleteConfirm(btn, id){
-  if (btn.dataset.confirming === "1"){
-    performDelete(id);
-    return;
-  }
+  if (btn.dataset.confirming === "1"){ performDelete(id); return; }
   btn.dataset.confirming = "1";
   const prevText = btn.textContent;
   btn.textContent = "확인";
@@ -100,18 +94,16 @@ function askDeleteConfirm(btn, id){
     btn.classList.remove("confirming");
   }, 2000);
 }
-
 function performDelete(id){
   tasks = tasks.filter(x => x.id !== id);
-  saveTasks();
-  renderAll();
+  saveTasks(); renderAll();
 }
 
 function enterEditMode(t){
-  subject.value    = t.subject || "";
-  taskName.value   = t.name || "";
-  memo.value       = t.memo || "";
-  selectedISO      = t.date;
+  subject.value = t.subject || "";
+  taskName.value = t.name || "";
+  memo.value = t.memo || "";
+  selectedISO = t.date;
   currentEditingId = t.id;
   taskName.focus();
   drawCalendar();
@@ -123,10 +115,7 @@ const renderAll = () => { renderTodos(); drawCalendar(); };
 function renderTodos(){
   const items = tasks
     .filter(t => !t.done)
-    .sort((a,b)=>
-      (a.date || "").localeCompare(b.date || "") ||
-      a.createdAt - b.createdAt
-    );
+    .sort((a,b)=> (a.date||"").localeCompare(b.date||"") || a.createdAt - b.createdAt);
 
   listEl.innerHTML = "";
   hintEl.style.display = items.length === 0 ? "block" : "none";
@@ -136,20 +125,16 @@ function renderTodos(){
     const subj   = t.subject ? `[${t.subject}] ` : "";
     const dateTx = t.date ? `${t.date.slice(5).replace('-', '/')} ` : "";
     const memoTx = t.memo ? ` · ${t.memo}` : "";
-
     li.innerHTML = `
       <input type="checkbox" class="chk" ${t.done ? "checked":""}>
       <span class="text">${dateTx}${subj}${t.name}${memoTx}</span>
       <button class="edit-btn" title="수정">수정</button>
       <button class="del-btn"  title="삭제">삭제</button>
     `;
-
     li.querySelector(".chk").onchange     = () => toggleTask(t.id);
     li.querySelector(".edit-btn").onclick = () => enterEditMode(t);
-
     const delBtn = li.querySelector(".del-btn");
-    delBtn.onclick = (e) => { e.stopPropagation(); askDeleteConfirm(delBtn, t.id); };
-
+    delBtn.onclick = (e)=>{ e.stopPropagation(); askDeleteConfirm(delBtn, t.id); };
     listEl.appendChild(li);
   });
 }
@@ -170,15 +155,13 @@ function drawCalendar(){
   const start = new Date(first);
   start.setDate(start.getDate() - (first.getDay() + 6) % 7);
 
-  for (let i=0; i<42; i++){
-    const d = new Date(start);
-    d.setDate(start.getDate()+i);
+  for (let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
     const dISO = iso(d);
-
     const cell = document.createElement("div");
     cell.className = "cell";
-    if (d.getMonth() !== m)   cell.classList.add("muted");
-    if (dISO === todayISO)    cell.classList.add("today");
+    if (d.getMonth() !== m) cell.classList.add("muted");
+    if (dISO === todayISO)  cell.classList.add("today");
     if (dISO === selectedISO) cell.classList.add("selected");
 
     const tasksForDay = byDate[dISO];
@@ -194,38 +177,61 @@ function drawCalendar(){
   }
 }
 
-/* ---------- Tooltip: viewport-fixed (임베드/스케일/스크롤 안전) ---------- */
+/* ---------- Tooltip: viewport-fixed + transform-safe fallback ---------- */
 function showTooltip(cell, tasksForDay){
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
-
-  // 고정 위치로 표시
-  tooltip.style.position = 'fixed';
   tooltip.classList.add('visible');
+
+  // 기본: 뷰포트 기준 fixed
+  tooltip.style.position = 'fixed';
+
+  const pad = 8;
+  const r   = cell.getBoundingClientRect();
 
   const ttW = tooltip.offsetWidth;
   const ttH = tooltip.offsetHeight;
 
-  // 셀의 화면 좌표
-  const r = cell.getBoundingClientRect();
-
-  // 기본: 셀 바로 아래 중앙
-  let top  = r.bottom + 6;
   let left = r.left + (r.width - ttW) / 2;
+  let top  = r.bottom + 6;
 
-  // 화면 클램핑
-  const pad = 8;
-  left = Math.max(pad, Math.min(left, window.innerWidth - ttW - pad));
-  if (top + ttH > window.innerHeight - pad){
-    top = r.top - ttH - 6; // 아래로 넘치면 위로
-  }
+  left = Math.max(pad, Math.min(left, window.innerWidth  - ttW - pad));
+  if (top + ttH > window.innerHeight - pad) top = r.top - ttH - 6;
 
-  tooltip.style.top  = `${top}px`;
   tooltip.style.left = `${left}px`;
+  tooltip.style.top  = `${top}px`;
+
+  // transform 걸린 조상 때문에 위치가 어긋나는 경우 보정
+  const rectAfter = tooltip.getBoundingClientRect();
+  const drift = Math.abs(rectAfter.left - left) + Math.abs(rectAfter.top - top);
+
+  if (drift > 2) {
+    // 가장 가까운 transform 조상 탐색
+    let p = cell.parentElement, transformed = null;
+    while (p && p !== document.body) {
+      const cs = getComputedStyle(p);
+      if (cs.transform !== 'none' || cs.perspective !== 'none' || cs.filter !== 'none') {
+        transformed = p; break;
+      }
+      p = p.parentElement;
+    }
+    if (transformed) {
+      const crect = transformed.getBoundingClientRect();
+      tooltip.style.position = 'absolute';
+      if (tooltip.parentElement !== transformed) transformed.appendChild(tooltip);
+
+      let l = (r.left - crect.left) + (r.width - ttW)/2;
+      let t = (r.bottom - crect.top) + 6;
+
+      l = Math.max(pad, Math.min(l, transformed.clientWidth  - ttW - pad));
+      if (t + ttH > transformed.clientHeight - pad) t = (r.top - crect.top) - ttH - 6;
+
+      tooltip.style.left = `${l}px`;
+      tooltip.style.top  = `${t}px`;
+    }
+  }
 }
 
-function hideTooltip(){
-  tooltip.classList.remove('visible');
-}
+function hideTooltip(){ tooltip.classList.remove('visible'); }
 
 /* ---------- Init ---------- */
 function init(){
@@ -233,9 +239,7 @@ function init(){
 
   wdEl.innerHTML = "";
   ["월","화","수","목","금","토","일"].forEach(w=>{
-    const d = document.createElement("div");
-    d.textContent = w;
-    wdEl.appendChild(d);
+    const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
   });
 
   dateBtn.onclick = addOrUpdateTask;
