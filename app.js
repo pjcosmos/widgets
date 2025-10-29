@@ -1,4 +1,8 @@
-/* ===== Study Planner - Leopard Edition (Final, Tooltip Offset + Delete Safe) ===== */
+/* ===== Study Planner - Leopard Edition (FINAL)
+   - Tooltip: position:fixed (viewport-based) → 정확히 셀 아래/위
+   - Delete: 2단계 확인 버튼 (Notion 임베드 호환)
+   - 기존 기능 변경 없음
+================================================ */
 
 /* ---------- State ---------- */
 let tasks = [];
@@ -35,7 +39,7 @@ const iso = d => {
   return `${y}-${m}-${dd}`;
 };
 
-/* ---------- Data Persistence ---------- */
+/* ---------- Data ---------- */
 const saveTasks = () => localStorage.setItem('plannerTasks', JSON.stringify(tasks));
 const loadTasks = () => JSON.parse(localStorage.getItem('plannerTasks') || '[]');
 
@@ -79,7 +83,7 @@ function toggleTask(id){
   renderAll();
 }
 
-/* Notion 임베드 환경: window.confirm 제한 → 2단계 클릭 확인 */
+/* Notion 임베드: confirm 제한 → 2단계 클릭 확인 */
 function askDeleteConfirm(btn, id){
   if (btn.dataset.confirming === "1"){
     performDelete(id);
@@ -104,10 +108,10 @@ function performDelete(id){
 }
 
 function enterEditMode(t){
-  subject.value   = t.subject || "";
-  taskName.value  = t.name || "";
-  memo.value      = t.memo || "";
-  selectedISO     = t.date;
+  subject.value    = t.subject || "";
+  taskName.value   = t.name || "";
+  memo.value       = t.memo || "";
+  selectedISO      = t.date;
   currentEditingId = t.id;
   taskName.focus();
   drawCalendar();
@@ -134,7 +138,7 @@ function renderTodos(){
     const memoTx = t.memo ? ` · ${t.memo}` : "";
 
     li.innerHTML = `
-      <input type="checkbox" class="chk">
+      <input type="checkbox" class="chk" ${t.done ? "checked":""}>
       <span class="text">${dateTx}${subj}${t.name}${memoTx}</span>
       <button class="edit-btn" title="수정">수정</button>
       <button class="del-btn"  title="삭제">삭제</button>
@@ -173,9 +177,9 @@ function drawCalendar(){
 
     const cell = document.createElement("div");
     cell.className = "cell";
-    if (d.getMonth() !== m)      cell.classList.add("muted");
-    if (dISO === todayISO)       cell.classList.add("today");
-    if (dISO === selectedISO)    cell.classList.add("selected");
+    if (d.getMonth() !== m)   cell.classList.add("muted");
+    if (dISO === todayISO)    cell.classList.add("today");
+    if (dISO === selectedISO) cell.classList.add("selected");
 
     const tasksForDay = byDate[dISO];
     if (tasksForDay && tasksForDay.length){
@@ -190,37 +194,33 @@ function drawCalendar(){
   }
 }
 
-/* ---------- Tooltip (offset 기반, 스크롤/스케일 안전) ---------- */
+/* ---------- Tooltip: viewport-fixed (임베드/스케일/스크롤 안전) ---------- */
 function showTooltip(cell, tasksForDay){
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
 
-  // 기준 컨테이너: 캘린더 카드
-  const cal = cell.closest('.calendar');
-  if (!cal) return;
-
-  // 기준 컨테이너 내부로 강제 이동 (상대 좌표 보장)
-  if (tooltip.parentElement !== cal) cal.appendChild(tooltip);
-
-  // 보이게 한 뒤 치수 측정
+  // 고정 위치로 표시
+  tooltip.style.position = 'fixed';
   tooltip.classList.add('visible');
+
   const ttW = tooltip.offsetWidth;
   const ttH = tooltip.offsetHeight;
 
-  // 상대좌표 (offset 기반)
-  const pad  = 6;
-  const baseL = cell.offsetLeft + (cell.offsetWidth / 2) - (ttW / 2);
-  let   baseT = cell.offsetTop  +  cell.offsetHeight + pad;
+  // 셀의 화면 좌표
+  const r = cell.getBoundingClientRect();
 
-  // 좌우 클램핑: 카드 바깥으로 안 나가게
-  let left = Math.max(pad, Math.min(baseL, cal.clientWidth - ttW - pad));
+  // 기본: 셀 바로 아래 중앙
+  let top  = r.bottom + 6;
+  let left = r.left + (r.width - ttW) / 2;
 
-  // 아래로 넘치면 위로 뒤집기
-  if (baseT + ttH > cal.clientHeight - pad){
-    baseT = cell.offsetTop - ttH - pad;
+  // 화면 클램핑
+  const pad = 8;
+  left = Math.max(pad, Math.min(left, window.innerWidth - ttW - pad));
+  if (top + ttH > window.innerHeight - pad){
+    top = r.top - ttH - 6; // 아래로 넘치면 위로
   }
 
+  tooltip.style.top  = `${top}px`;
   tooltip.style.left = `${left}px`;
-  tooltip.style.top  = `${baseT}px`;
 }
 
 function hideTooltip(){
