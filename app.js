@@ -1,4 +1,4 @@
-/* ===== Study Planner - Final Version (Timezone & Tooltip Bug Fixed) ===== */
+/* ===== Study Planner - DEBUGGING VERSION ===== */
 
 // ---------- State ----------
 let tasks = [];
@@ -22,13 +22,9 @@ const tooltip = document.getElementById("tooltip");
 
 // ---------- Utils ----------
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }));
-
-/**
- * ✅ 날짜를 시간대 변환 없이 'YYYY-MM-DD' 형식으로 변환하는 함수 (오류 수정)
- */
 const iso = (d) => {
   const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+  const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
@@ -150,7 +146,12 @@ function drawCalendar() {
   }
 }
 
+// ✅ 점검용 코드가 추가된 툴팁 함수
 function showTooltip(cell, tasksForDay) {
+  console.log("--- 툴팁 표시 시도 ---");
+  console.log("대상 날짜:", cell.textContent, "일");
+  console.log("오늘의 할 일:", tasksForDay);
+
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
   tooltip.classList.add('visible');
 
@@ -158,6 +159,13 @@ function showTooltip(cell, tasksForDay) {
     const cellRect = cell.getBoundingClientRect();
     const calendarRect = cell.closest('.calendar').getBoundingClientRect();
     
+    console.log("툴팁 너비:", tooltip.offsetWidth, "px");
+    
+    if (tooltip.offsetWidth === 0) {
+      console.error("오류: 툴팁의 너비가 0입니다. 위치를 계산할 수 없습니다.");
+      return;
+    }
+
     let top = cellRect.bottom - calendarRect.top + 8;
     let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
 
@@ -172,6 +180,8 @@ function showTooltip(cell, tasksForDay) {
     
     tooltip.style.top = `${top}px`;
     tooltip.style.left = `${left}px`;
+    console.log("최종 위치:", {top, left});
+    console.log("--------------------");
   });
 }
 
@@ -181,9 +191,7 @@ function hideTooltip() {
 
 // ---------- Initializer ----------
 function init() {
-  // selectedISO를 초기화할 때도 새로운 iso 함수 사용
   selectedISO = iso(new Date());
-
   wdEl.innerHTML = "";
   ["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
     const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
