@@ -1,4 +1,4 @@
-/* ===== Study Planner - LEOPARD THEME (DROP-IN) ===== */
+/* ===== Study Planner - LEOPARD THEME (Notion Embed Fix) ===== */
 
 /* 기본 테마: Sand Leopard */
 :root{
@@ -8,9 +8,9 @@
   --text:#222222;
   --muted:#6a665f;
   --line:#e7e1d6;
-  --acc:#1f1b19;            /* 버튼/포커스 */
-  --spot1:#2f2925;          /* 큰 점 */
-  --spot2:#5a4c41;          /* 작은 점 */
+  --acc:#1f1b19;         /* 버튼/포커스 */
+  --spot1:#2f2925;        /* 큰 점 */
+  --spot2:#5a4c41;        /* 작은 점 */
   --radius:20px;
   --shadow:0 12px 30px rgba(0,0,0,.25);
 }
@@ -42,16 +42,25 @@ body.leopard-night{
 /* 전역 */
 *{box-sizing:border-box}
 html,body{height:auto;margin:0}
-html,body{background:var(--bg); color:var(--text);}
-
 body{
   font:14px/1.5 "Pretendard", ui-sans-serif, -apple-system, "Segoe UI", "Noto Sans KR", Roboto, Arial, sans-serif;
-  /* 🐆 레오파드 패턴 (노이즈 레이어 + 스팟 레이어) */
+  color:var(--text);
+}
+
+/* ✅ 중앙 래퍼 수정 */
+.app{
+  width:100%;
+  max-width:760px;
+  margin:0 auto;
+  padding:40px 14px 44px;
+  display:flex; flex-direction:column; gap:22px;
+  min-height:100vh;
+
+  /* ✅ 🐆 레오파드 패턴을 body 대신 여기에 적용 */
   background-image:
     radial-gradient(100% 100% at 0% 0%, #00000020, #0000 60%),
     radial-gradient(100% 100% at 100% 0%, #ffffff08, #0000 60%),
     radial-gradient(100% 100% at 0% 100%, #00000018, #0000 60%),
-    /* 스팟 레이어 (반복) */
     radial-gradient(12px 10px at 20px 14px, var(--spot1) 30%, #0000 32%),
     radial-gradient(10px 8px  at 60px 30px, var(--spot2) 28%, #0000 31%),
     radial-gradient(9px 7px   at 90px 10px, var(--spot1) 30%, #0000 33%),
@@ -61,17 +70,7 @@ body{
     radial-gradient(9px 7px   at 250px 12px, var(--spot1) 30%, #0000 33%);
   background-size: auto, auto, auto, 280px 120px, 280px 120px, 280px 120px, 280px 120px, 280px 120px, 280px 120px, 280px 120px;
   background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-  /* 살짝 그레인 질감 */
-  position:relative;
-}
-
-/* 중앙 래퍼 */
-.app{
-  width:100%;
-  max-width:760px;
-  margin:0 auto;
-  padding:20px 14px 44px;
-  display:flex; flex-direction:column; gap:22px;
+  background-color: var(--bg);
 }
 
 /* 카드 공통 (글라스 느낌) */
@@ -84,7 +83,6 @@ body{
   border-radius:var(--radius);
   box-shadow:var(--shadow);
   padding:18px;
-  /* 카드 내부에도 아주 옅은 스팟 섀도우로 질감 */
   position:relative;
   overflow:hidden;
 }
@@ -185,7 +183,7 @@ body{
 #todoList{list-style:none;margin:0;padding:0}
 #todoList li{
   background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px;
-  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+  display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:12px;
   margin-bottom:10px; transition:.15s ease;
 }
 #todoList li:hover{ transform: translateY(-1px); }
@@ -198,30 +196,19 @@ body{
 .chk:checked{ border-color:var(--acc); background:var(--acc); }
 .chk:checked::after{ content:""; width:10px;height:10px; clip-path:polygon(14% 44%,0 62%,41% 100%,100% 22%,82% 6%,39% 72%); background:#fff; }
 
-/* 삭제 */
-.del{ border:0; background:transparent; cursor:pointer; color:#b32a2a; font-weight:800; }
+/* 수정/삭제 버튼 */
+.edit-btn, .del-btn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 4px;
+}
+.edit-btn { color: #4b4b4b; }
+.del-btn { color: #b32a2a; }
 
 /* 빈 상태 힌트 */
 .hint{text-align:center;color:var(--muted);margin-top:6px;font-size:13px}
-
-/* 가져오기/내보내기(있다면) */
-.sync-row{
-  display:flex; gap:10px; justify-content:flex-end; margin:-4px 0 8px;
-}
-.ghost{
-  border:1px solid var(--line);
-  background:#fff; color:var(--acc);
-  border-radius:12px; padding:8px 12px; cursor:pointer; transition:.12s ease;
-}
-.ghost:hover{ transform: translateY(-1px); }
-
-#todoList .del:nth-of-type(1) {
-  color:#4b4b4b; /* 수정 버튼 */
-}
-#todoList .del:nth-of-type(2) {
-  color:#b32a2a; /* 삭제 버튼 */
-}
-
 
 /* 반응형 */
 @media (max-width:560px){
