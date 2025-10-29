@@ -1,39 +1,29 @@
-/* ===== Study Planner - Firebase Firestore Sync (FULL REPLACEMENT) =====
-    - 기기/브라우저/노션 임베드 간 자동 동기화
-    - 익명 로그인 + Firestore 컬렉션(users/{uid}/tasks)
-    - 기존 UI/동작(달력 선택 → 아이콘 클릭으로 즉시 추가, 체크로 완료, 툴팁)은 그대로
+/* ===== Study Planner - LocalStorage Version =====
+    - Firebase 없이 브라우저 자체에 데이터를 저장합니다.
+    - 다른 기기와 동기화는 되지 않지만, 설정 없이 바로 작동합니다.
 ======================================================================= */
 
-/* ---------- Firebase refs ---------- */
-const auth = firebase.auth();
-const db = firebase.firestore();
-
 /* ---------- State ---------- */
-let uid = null;
-let unsubscribe = null; // Firestore onSnapshot 해제용
-let tasks = [];         // 메모리 미러 (필터/정렬/툴팁 구성을 빠르게)
-
-/* 오늘을 기본 선택 날짜로 */
-let selectedISO = new Date().toISOString().slice(0, 10);
-let currentEditingId = null; // 수정 중인 task의 ID를 추적
+let tasks = [];         // 모든 할 일 데이터를 담는 배열 (메모리)
+let selectedISO = new Date().toISOString().slice(0, 10); // 오늘 날짜 기본 선택
+let currentEditingId = null; // 수정 중인 task의 ID 추적
 
 /* ---------- DOM refs ---------- */
-// Todo
 const subject = document.getElementById("subject");
 const taskName = document.getElementById("taskName");
 const memo = document.getElementById("memo");
 const dateBtn = document.getElementById("dateBtn");
 const listEl = document.getElementById("todoList");
 const hintEl = document.getElementById("emptyHint");
-// Calendar
-const wdEl = document.getElementById("wd");
 const grid = document.getElementById("grid");
 const label = document.getElementById("calLabel");
 const prev = document.getElementById("prevMon");
 const next = document.getElementById("nextMon");
 const tip = document.getElementById("tooltip");
+const wdEl = document.getElementById("wd");
 
 /* ---------- Utils ---------- */
+// 고유 ID 생성 함수
 const uuid = () =>
   (crypto.randomUUID && crypto.randomUUID()) ||
   'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -41,66 +31,55 @@ const uuid = () =>
     return v.toString(16);
   });
 
+// 날짜 객체를 'YYYY-MM-DD' 형식의 문자열로 변환
 const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
   .toISOString().slice(0, 10);
 
-/* ---------- Auth & Live Snapshot ---------- */
-async function ensureSignedIn() {
-  try {
-    const cred = await auth.signInAnonymously();
-    uid = cred.user.uid;
-    bindLiveQuery();
-  } catch (error) {
-    console.error("익명 로그인 실패:", error);
-  }
+/* ---------- Data Persistence (LocalStorage) ---------- */
+// ✅ 데이터를 브라우저에 저장하는 함수
+function saveTasks() {
+  localStorage.setItem('plannerTasks', JSON.stringify(tasks));
 }
 
-function bindLiveQuery() {
-  if (!uid) return;
-  if (unsubscribe) unsubscribe();
-
-  const ref = db.collection('users').doc(uid).collection('tasks');
-  unsubscribe = ref.onSnapshot(snap => {
-    const arr = [];
-    snap.forEach(doc => arr.push(doc.data()));
-    tasks = arr;
-    renderTodos();
-    drawCalendar();
-  }, error => {
-    console.error("Firestore 데이터 수신 오류:", error);
-  });
+// ✅ 브라우저에서 데이터를 불러오는 함수
+function loadTasks() {
+  const savedTasks = localStorage.getItem('plannerTasks');
+  return savedTasks ? JSON.parse(savedTasks) : [];
 }
 
 /* ---------- CRUD (Create, Read, Update, Delete) ---------- */
-async function addOrUpdateTask() {
+function addOrUpdateTask() {
   const name = taskName.value.trim();
-  if (!name || !uid) return;
-
-  const taskData = {
-    subject: subject.value.trim(),
-    name,
-    memo: memo.value.trim(),
-    date: selectedISO,
-    done: false,
-    createdAt: Date.now()
-  };
-  
-  // ✅ 수정 모드인 경우
-  if (currentEditingId) {
-    const originalTask = tasks.find(t => t.id === currentEditingId);
-    await db.collection('users').doc(uid).collection('tasks').doc(currentEditingId).update({
-        ...originalTask, // 기존 데이터 유지
-        subject: taskData.subject,
-        name: taskData.name,
-        memo: taskData.memo,
-        date: taskData.date
-    });
-    currentEditingId = null;
-  } else { // ✅ 추가 모드인 경우
-    taskData.id = uuid();
-    await db.collection('users').doc(uid).collection('tasks').doc(taskData.id).set(taskData);
+  if (!name) {
+    alert("과제명은 필수입니다.");
+    return;
   }
 
+  if (currentEditingId) { // 수정 모드
+    const task = tasks.find(t => t.id === currentEditingId);
+    if (task) {
+      task.subject = subject.value.trim();
+      task.name = name;
+      task.memo = memo.value.trim();
+      task.date = selectedISO;
+    }
+    currentEditingId = null; // 수정 모드 종료
+  } else { // 추가 모드
+    const newTask = {
+      id: uuid(),
+      subject: subject.value.trim(),
+      name,
+      memo: memo.value.trim(),
+      date: selectedISO,
+      done: false,
+      createdAt: Date.now()
+    };
+    tasks.push(newTask);
+  }
+
+  saveTasks(); // 변경사항 저장
+  renderAll(); // 화면 전체 새로고침
+  
   // 입력 필드 초기화
   subject.value = "";
   taskName.value = "";
@@ -108,44 +87,41 @@ async function addOrUpdateTask() {
   taskName.focus();
 }
 
-// ✅ toggleDone -> toggleTask로 이름 변경, isDone 상태를 직접 받음
-async function toggleTask(id, isDone) {
-  if (!uid) return;
-  await db.collection('users').doc(uid).collection('tasks').doc(id).update({ done: isDone });
-  // onSnapshot이 자동으로 UI를 갱신하므로 추가 렌더링 호출 필요 없음
-}
-
-async function deleteTask(id) {
-  if (!uid) return;
-  if (confirm("정말 삭제하시겠습니까?")) {
-    await db.collection('users').doc(uid).collection('tasks').doc(id).delete();
+function toggleTask(id, isDone) {
+  const task = tasks.find(t => t.id === id);
+  if (task) {
+    task.done = isDone;
+    saveTasks();
+    renderAll();
   }
 }
 
-// ✅ 수정 상태로 전환하는 함수
-function enterEditMode(task) {
-    subject.value = task.subject || "";
-    taskName.value = task.name || "";
-    memo.value = task.memo || "";
-    selectedISO = task.date; // 날짜도 수정 대상으로 변경
-    currentEditingId = task.id;
-    taskName.focus();
-    drawCalendar(); // 선택된 날짜가 바뀌었으므로 달력 다시 그림
+function deleteTask(id) {
+  if (confirm("정말 삭제하시겠습니까?")) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+    renderAll();
+  }
 }
 
+function enterEditMode(task) {
+  subject.value = task.subject || "";
+  taskName.value = task.name || "";
+  memo.value = task.memo || "";
+  selectedISO = task.date;
+  currentEditingId = task.id;
 
-/* ---------- UI Event Listeners ---------- */
-dateBtn.onclick = addOrUpdateTask;
-taskName.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addOrUpdateTask();
-});
-memo.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") addOrUpdateTask();
-});
+  taskName.focus();
+  drawCalendar(); // 선택 날짜가 바뀌었을 수 있으므로 달력 다시 그림
+}
 
-/* ---------- Todo UI Rendering ---------- */
+/* ---------- UI Rendering ---------- */
+function renderAll() {
+  renderTodos();
+  drawCalendar();
+}
+
 function renderTodos() {
-  // ✅ 로컬 tasks 배열을 직접 사용, 날짜 -> 생성 시간 순으로 정렬
   const items = tasks
     .filter(t => !t.done)
     .sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.createdAt || 0) - (b.createdAt || 0));
@@ -159,26 +135,23 @@ function renderTodos() {
     const chk = document.createElement("input");
     chk.type = "checkbox";
     chk.className = "chk";
-    chk.title = "완료";
-    // ✅ onchange 이벤트에서 toggleTask 함수 호출
+    chk.checked = t.done;
     chk.onchange = () => toggleTask(t.id, chk.checked);
 
     const text = document.createElement("span");
     text.className = "text";
     const subj = t.subject ? `[${t.subject}] ` : "";
-    text.textContent = `${t.date ? t.date.slice(5).replace('-', '/') : ''} ${subj}${t.name}${t.memo ? " · " + t.memo : ""}`;
+    const dateStr = t.date ? `${t.date.slice(5).replace('-', '/')} ` : '';
+    text.textContent = `${dateStr}${subj}${t.name}${t.memo ? " · " + t.memo : ""}`;
 
-    // ✅ 수정 버튼
     const editBtn = document.createElement("button");
     editBtn.className = "edit-btn";
     editBtn.textContent = "수정";
     editBtn.onclick = () => enterEditMode(t);
 
-    // ✅ 삭제 버튼
     const delBtn = document.createElement("button");
     delBtn.className = "del-btn";
     delBtn.textContent = "삭제";
-    // ✅ onclick 이벤트에서 deleteTask 함수 호출
     delBtn.onclick = () => deleteTask(t.id);
 
     li.append(chk, text, editBtn, delBtn);
@@ -186,23 +159,15 @@ function renderTodos() {
   }
 }
 
-/* ---------- Calendar (Original code is mostly fine) ---------- */
-["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
-  const d = document.createElement("div");
-  d.textContent = w;
-  wdEl.appendChild(d);
-});
-
+/* ---------- Calendar ---------- */
 let cur = new Date(); cur.setDate(1);
-prev.onclick = () => { cur.setMonth(cur.getMonth() - 1); drawCalendar(); };
-next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
 
 function drawCalendar() {
   grid.innerHTML = "";
   label.textContent = new Intl.DateTimeFormat("ko", { year: "numeric", month: "long" }).format(cur);
 
   const y = cur.getFullYear(), m = cur.getMonth();
-  const start = (new Date(y, m, 1).getDay() + 6) % 7; // 월=0
+  const start = (new Date(y, m, 1).getDay() + 6) % 7;
   const last = new Date(y, m + 1, 0).getDate();
   const prevLast = new Date(y, m, 0).getDate();
   const todayISO = new Date().toISOString().slice(0, 10);
@@ -225,30 +190,21 @@ function drawCalendar() {
 
     cell.addEventListener("click", () => {
       selectedISO = dISO;
-      drawCalendar(); // ✅ 달력 전체를 다시 그려서 선택 상태를 업데이트
+      drawCalendar();
     });
 
     cell.addEventListener("mouseenter", (e) => {
       const arr = byDate[dISO] || [];
       if (arr.length === 0) { tip.hidden = true; return; }
-
-      tip.innerHTML = `<ul>${arr.map(t => `<li>${t.done ? '<s>' : ''}${t.name}${t.done ? '</s>' : ''}</li>`).join('')}</ul>`;
+      
+      tip.innerHTML = `<ul>${arr.map(t => `<li style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${t.name}</li>`).join('')}</ul>`;
       tip.hidden = false;
 
-      const gap = 8;
-      const cellRect = e.currentTarget.getBoundingClientRect();
-      const cardRect = grid.closest(".calendar").getBoundingClientRect();
-      const tipRect = tip.getBoundingClientRect();
-
+      const gap = 8, cellRect = e.currentTarget.getBoundingClientRect(), cardRect = grid.closest(".calendar").getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
       let left = cellRect.left + cellRect.width / 2 - cardRect.left - tipRect.width / 2;
       let top = cellRect.bottom - cardRect.top + gap;
-
-      const minL = 4, maxL = cardRect.width - tipRect.width - 4;
-      left = Math.max(minL, Math.min(left, maxL));
-
-      if (top + tipRect.height > cardRect.height - 4) {
-        top = cellRect.top - cardRect.top - tipRect.height - gap;
-      }
+      left = Math.max(4, Math.min(left, cardRect.width - tipRect.width - 4));
+      if (top + tipRect.height > cardRect.height - 4) top = cellRect.top - cardRect.top - tipRect.height - gap;
       tip.style.left = `${left}px`;
       tip.style.top = `${top}px`;
     });
@@ -256,21 +212,33 @@ function drawCalendar() {
     grid.appendChild(cell);
   };
 
-  for (let i = 0; i < start; i++) {
-    const dnum = prevLast - start + 1 + i;
-    addCell(dnum, new Date(y, m - 1, dnum), true);
-  }
+  for (let i = 0; i < start; i++) addCell(prevLast - start + 1 + i, new Date(y, m - 1, prevLast - start + 1 + i), true);
   for (let d = 1; d <= last; d++) addCell(d, new Date(y, m, d), false);
-  const total = start + last;
-  const tail = (7 - (total % 7)) % 7;
+  const tail = (7 - (start + last) % 7) % 7;
   for (let i = 1; i <= tail; i++) addCell(i, new Date(y, m + 1, i), true);
 }
 
-document.addEventListener("click", (ev) => {
-  if (!grid.contains(ev.target)) {
-    tip.hidden = true;
-  }
-}, { passive: true });
+/* ---------- Boot / Initializer ---------- */
+function init() {
+  // 요일 헤더 그리기
+  ["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
+    const d = document.createElement("div");
+    d.textContent = w;
+    wdEl.appendChild(d);
+  });
+  
+  // 이벤트 리스너 연결
+  dateBtn.onclick = addOrUpdateTask;
+  taskName.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
+  memo.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
+  prev.onclick = () => { cur.setMonth(cur.getMonth() - 1); drawCalendar(); };
+  next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
+  document.addEventListener("click", e => !grid.contains(e.target) && (tip.hidden = true));
 
-/* ---------- Boot ---------- */
-ensureSignedIn();
+  // 데이터 불러와서 화면에 그리기
+  tasks = loadTasks();
+  renderAll();
+}
+
+// 앱 시작!
+init();
