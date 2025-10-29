@@ -157,3 +157,68 @@ body{
 .del-btn{ color:#e57373 }
 
 .hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px }
+
+/* ===== MINI WIDGET PRESET (超컴팩트) ===== */
+.app.mini{
+  max-width: 360px;
+  padding: 10px 8px;
+  gap: 10px;
+}
+
+/* 카드 여백/라운드 축소 */
+.app.mini .card{ padding:10px; border-radius:12px; box-shadow: 0 6px 14px rgba(0,0,0,.08); }
+.app.mini .card.calendar::after,
+.app.mini .card.todo::after{ inset: 8px; border-radius: calc(12px - 8px); }
+
+/* 헤더 줄이기 */
+.app.mini .card-head{ margin-bottom:4px; }
+.app.mini .card-head strong{ font-size:13px; font-weight:800; }
+
+/* 버튼 더 작게 */
+.app.mini .glass-btn{ height:26px; min-width:26px; padding:0 6px; border-radius:8px; font-size:12px; }
+.app.mini .nav .glass-btn{ width:26px; height:26px; }
+
+/* 캘린더 그리드 컴팩트 */
+.app.mini .weekday, 
+.app.mini .grid{ gap:4px; }
+.app.mini .weekday div{ font-size:10px; }
+.app.mini .cell{
+  height:28px; border-radius:8px; font-size:12px;
+}
+.app.mini .cell.hasTasks::after{ width:4px; height:4px; bottom:4px; }
+.app.mini .cell.selected{ font-weight:800; }
+
+/* 툴팁도 미니 */
+.app.mini .tooltip{
+  padding:5px 8px; font-size:11px; max-width:160px; box-shadow:0 3px 10px rgba(0,0,0,.15);
+}
+
+/* 입력 박스 더 촘촘하게 */
+.app.mini .input-box{
+  grid-template-columns: 1fr 1fr auto;  /* 과목 입력 생략 시: 과목칸을 줄이고 싶으면 이 줄 유지 */
+  gap:6px; margin-bottom:8px;
+}
+.app.mini .input-box input{ padding:8px; border-radius:8px; font-size:12px; }
+
+/* 투두 항목도 컴팩트 */
+.app.mini #todoList li{
+  padding:6px 8px; border-radius:10px; gap:8px;
+  grid-template-columns: auto 1fr auto auto;
+}
+.app.mini #todoList .text{ font-size:12px; }
+
+/* 체크박스/버튼 축소 */
+.app.mini .chk{ width:14px; height:14px; border-width:1.4px; }
+.app.mini .chk:checked::after{ width:7px; height:7px; }
+
+.app.mini .edit-btn, 
+.app.mini .del-btn{ font-size:12px; padding:3px 5px; border-radius:6px; }
+
+/* 테두리 두께도 살짝 얇게 */
+.app.mini :root, 
+:root .app.mini{ --leo-border: 8px; }
+
+/* 아주 좁은 영역에서 자동 미니 적용(안전망) */
+@media (max-width: 380px){
+  .app{ max-width: 340px; }
+}
