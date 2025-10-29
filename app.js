@@ -1,62 +1,118 @@
-/* ===== Study Planner - Monotone Gray =====
-   app.js (FULL REPLACEMENT)
-   - 과목 텍스트 입력
-   - 체크박스로 완료 표시 (달력 기록은 유지)
-   - 날짜 아이콘 클릭 -> 선택된 날짜로 즉시 추가
-   - 달력 날짜 클릭 -> 선택 날짜(selectedISO) 갱신 + 하이라이트
-   - 툴팁: "셀 아래 중앙"에 붙이고, 가장자리면 자동 반전
-================================================ */
+/* ===== Study Planner - Firebase Firestore Sync (FULL REPLACEMENT) =====
+   - 기기/브라우저/노션 임베드 간 자동 동기화
+   - 익명 로그인 + Firestore 컬렉션(users/{uid}/tasks)
+   - 기존 UI/동작(달력 선택 → 아이콘 클릭으로 즉시 추가, 체크로 완료, 툴팁)은 그대로
+======================================================================= */
 
+/* ---------- Firebase refs ---------- */
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// 오프라인 캐시(선택): 안정성 ↑  (원하면 주석 해제)
+// db.enablePersistence().catch(()=>{}); 
+
+/* ---------- State ---------- */
+let uid = null;
+let unsubscribe = null;  // Firestore onSnapshot 해제용
+let tasks = [];          // 메모리 미러 (필터/정렬/툴팁 구성을 빠르게)
+
+/* 오늘을 기본 선택 날짜로 */
 let selectedISO = new Date().toISOString().slice(0, 10);
 
-/* ------- Local Storage ------- */
-const KEY = "tasks_ui_gray_v2";
-const load = () => JSON.parse(localStorage.getItem(KEY) || "[]");
-const save = (v) => localStorage.setItem(KEY, JSON.stringify(v));
-
-/* ------- Elements (Todo) ------- */
+/* ---------- DOM refs ---------- */
+// Todo
 const subject  = document.getElementById("subject");
 const taskName = document.getElementById("taskName");
 const memo     = document.getElementById("memo");
 const dateBtn  = document.getElementById("dateBtn");
-const addBtn   = document.getElementById("addBtn"); // 숨김
+const addBtn   = document.getElementById("addBtn"); // 숨김용(안씀)
 const listEl   = document.getElementById("todoList");
 const hintEl   = document.getElementById("emptyHint");
+// Calendar
+const wdEl  = document.getElementById("wd");
+const grid  = document.getElementById("grid");
+const label = document.getElementById("calLabel");
+const prev  = document.getElementById("prevMon");
+const next  = document.getElementById("nextMon");
+const tip   = document.getElementById("tooltip");
 
-/* 아이콘 클릭 → 선택된 날짜로 즉시 추가 */
-dateBtn.onclick = () => {
+/* ---------- Utils ---------- */
+const uuid = () =>
+  (crypto.randomUUID && crypto.randomUUID()) ||
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+
+const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+                  .toISOString().slice(0,10);
+
+/* ---------- Auth & Live Snapshot ---------- */
+async function ensureSignedIn() {
+  const cred = await auth.signInAnonymously();
+  uid = cred.user.uid;
+  bindLiveQuery();
+}
+
+function bindLiveQuery() {
+  if (!uid) return;
+  // 기존 구독 있으면 해제
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+
+  const ref = db.collection('users').doc(uid).collection('tasks');
+  unsubscribe = ref.onSnapshot(snap => {
+    const arr = [];
+    snap.forEach(doc => arr.push(doc.data()));
+    // createdAt 오름차순, 날짜 → createdAt 정렬
+    tasks = arr.sort((a,b) =>
+      (a.date||"").localeCompare(b.date||"") || (a.createdAt||0)-(b.createdAt||0)
+    );
+    renderTodos();
+    drawCalendar();
+  });
+}
+
+/* ---------- CRUD ---------- */
+async function addTaskQuick() {
   const name = taskName.value.trim();
-  if (!name) return;
+  if (!name || !uid) return;
 
-  const items = load();
-  items.push({
-    id: crypto.randomUUID(),
+  const t = {
+    id: uuid(),
     subject: subject.value.trim(),
     name,
     memo: memo.value.trim(),
-    date: selectedISO,
+    date: selectedISO,  // 현재 선택 날짜
     done: false,
     createdAt: Date.now()
-  });
-  save(items);
+  };
+  await db.collection('users').doc(uid).collection('tasks').doc(t.id).set(t);
 
   taskName.value = "";
   memo.value = "";
+}
 
-  renderTodos();
-  drawCalendar();
-};
+async function toggleDone(id) {
+  if (!uid) return;
+  await db.collection('users').doc(uid).collection('tasks').doc(id).update({ done: true });
+}
 
-/* Enter로도 바로 추가 */
+async function deleteTask(id) {
+  if (!uid) return;
+  await db.collection('users').doc(uid).collection('tasks').doc(id).delete();
+}
+
+/* ---------- Todo UI ---------- */
+dateBtn.onclick = addTaskQuick;
 taskName.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") dateBtn.click();
+  if (e.key === "Enter") addTaskQuick();
 });
 
-/* 목록 렌더링 (미완료만) */
 function renderTodos() {
-  const items = load()
-    .filter(t => !t.done)
-    .sort((a, b) => (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt);
+  const items = tasks.filter(t => !t.done)
+                     .sort((a,b)=>
+                       (a.date||"").localeCompare(b.date||"") ||
+                       (a.createdAt||0)-(b.createdAt||0));
 
   listEl.innerHTML = "";
   if (items.length === 0) {
@@ -72,16 +128,7 @@ function renderTodos() {
     chk.type = "checkbox";
     chk.className = "chk";
     chk.title = "완료";
-    chk.onchange = () => {
-      const all = load();
-      const idx = all.findIndex(x => x.id === t.id);
-      if (idx > -1) {
-        all[idx].done = true; // 리스트에서만 숨김, 달력 기록은 유지
-        save(all);
-        renderTodos();
-        drawCalendar();
-      }
-    };
+    chk.onchange = () => toggleDone(t.id);
 
     const text = document.createElement("span");
     text.className = "text";
@@ -91,74 +138,55 @@ function renderTodos() {
     const del = document.createElement("button");
     del.className = "del";
     del.textContent = "삭제";
-    del.onclick = () => {
-      save(load().filter(x => x.id !== t.id));
-      renderTodos();
-      drawCalendar();
-    };
+    del.onclick = () => deleteTask(t.id);
 
     li.append(chk, text, del);
     listEl.append(li);
   }
 }
 
-/* ------- Elements (Calendar) ------- */
-const wdEl  = document.getElementById("wd");
-const grid  = document.getElementById("grid");
-const label = document.getElementById("calLabel");
-const prev  = document.getElementById("prevMon");
-const next  = document.getElementById("nextMon");
-const tip   = document.getElementById("tooltip");
-
-/* 요일 헤더 (월~일) */
-["월","화","수","목","금","토","일"].forEach(w => {
-  const d = document.createElement("div");
+/* ---------- Calendar ---------- */
+["월","화","수","목","금","토","일"].forEach(w=>{
+  const d=document.createElement("div");
   d.textContent = w;
   wdEl.appendChild(d);
 });
 
-let cur = new Date();
-cur.setDate(1);
+let cur = new Date(); cur.setDate(1);
+prev.onclick = ()=>{ cur.setMonth(cur.getMonth()-1); drawCalendar(); };
+next.onclick = ()=>{ cur.setMonth(cur.getMonth()+1); drawCalendar(); };
 
-prev.onclick = () => { cur.setMonth(cur.getMonth() - 1); drawCalendar(); };
-next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
-
-/* 달력 렌더링 */
-function drawCalendar() {
+function drawCalendar(){
   grid.innerHTML = "";
   label.textContent = new Intl.DateTimeFormat("ko",{year:"numeric",month:"long"}).format(cur);
 
-  const y = cur.getFullYear();
-  const m = cur.getMonth();
-  const start    = (new Date(y, m, 1).getDay() + 6) % 7;  // 월=0 기준
-  const last     = new Date(y, m + 1, 0).getDate();
-  const prevLast = new Date(y, m, 0).getDate();
+  const y=cur.getFullYear(), m=cur.getMonth();
+  const start    = (new Date(y,m,1).getDay()+6)%7; // 월=0
+  const last     = new Date(y,m+1,0).getDate();
+  const prevLast = new Date(y,m,0).getDate();
   const todayISO = new Date().toISOString().slice(0,10);
 
-  const iso = (d) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10);
-
-  // 날짜별 작업 묶기 (완료 포함)
+  // 날짜별 그룹(완료 포함: 기록 유지)
   const byDate = {};
-  for (const t of load()) {
+  for (const t of tasks) {
     if (!t.date) continue;
     (byDate[t.date] ||= []).push(t);
   }
 
-  const addCell = (n, d, muted) => {
+  const addCell = (n, d, muted)=>{
     const cell = document.createElement("div");
     cell.className = "cell" + (muted ? " muted" : "");
     cell.textContent = String(n);
 
     const dISO = iso(d);
-    if (dISO === todayISO)      cell.classList.add("today");
-    if (byDate[dISO]?.length)   cell.classList.add("hasTasks");
-    if (dISO === selectedISO)   cell.classList.add("selected");
+    if (dISO === todayISO)    cell.classList.add("today");
+    if (byDate[dISO]?.length) cell.classList.add("hasTasks");
+    if (dISO === selectedISO) cell.classList.add("selected");
 
     // 날짜 선택
-    cell.addEventListener("click", () => {
+    cell.addEventListener("click", ()=>{
       selectedISO = dISO;
-      grid.querySelectorAll(".cell.selected").forEach(c => c.classList.remove("selected"));
+      grid.querySelectorAll(".cell.selected").forEach(c=>c.classList.remove("selected"));
       cell.classList.add("selected");
       cell.animate(
         [{transform:"scale(1)"},{transform:"scale(.96)"},{transform:"scale(1)"}],
@@ -166,16 +194,15 @@ function drawCalendar() {
       );
     });
 
-    // === 툴팁: "셀 아래 중앙" + 가장자리 자동 반전 ===
-    cell.addEventListener("mouseenter", (e) => {
+    // 툴팁: 셀 아래 중앙 (가장자리 자동 반전)
+    cell.addEventListener("mouseenter", (e)=>{
       const arr = byDate[dISO] || [];
-      if (arr.length === 0) { tip.hidden = true; return; }
+      if (arr.length === 0){ tip.hidden = true; return; }
 
-      // 내용 구성
       tip.innerHTML = "";
       const ul = document.createElement("ul");
-      arr.forEach(t => {
-        const li = document.createElement("li");
+      arr.forEach(t=>{
+        const li=document.createElement("li");
         li.textContent = t.name;
         ul.appendChild(li);
       });
@@ -186,7 +213,7 @@ function drawCalendar() {
       const cellRect = e.currentTarget.getBoundingClientRect();
       const cardRect = grid.closest(".calendar").getBoundingClientRect();
 
-      // 일단 배치해보고 사이즈 측정
+      // 배치 후 사이즈 측정
       tip.style.left = "0px";
       tip.style.top  = "0px";
       const tipRect1 = tip.getBoundingClientRect();
@@ -198,12 +225,11 @@ function drawCalendar() {
       let top  = cellRect.bottom - cardRect.top + gap;
 
       // 가로 클램프
-      const minL = 4;
-      const maxL = cardRect.width - tipW - 4;
+      const minL = 4, maxL = cardRect.width - tipW - 4;
       if (left < minL) left = minL;
       if (left > maxL) left = maxL;
 
-      // 세로 넘치면 위로 반전
+      // 세로 넘치면 위 반전
       if (top + tipH > cardRect.height - 4) {
         top = cellRect.top - cardRect.top - tipH - gap;
         if (top < 4) top = 4;
@@ -212,86 +238,29 @@ function drawCalendar() {
       tip.style.left = `${left}px`;
       tip.style.top  = `${top}px`;
     });
-
-    cell.addEventListener("mouseleave", () => {
-      tip.hidden = true;
-    });
+    cell.addEventListener("mouseleave", ()=> tip.hidden = true);
 
     grid.appendChild(cell);
-  }; // ←←← addCell 닫힘 (중요!)
+  };
 
-  // 이전 달
-  for (let i = 0; i < start; i++) {
+  // 앞/본/뒤 달 채우기
+  for (let i=0;i<start;i++){
     const dnum = prevLast - start + 1 + i;
-    addCell(dnum, new Date(y, m - 1, dnum), true);
+    addCell(dnum, new Date(y,m-1,dnum), true);
   }
-  // 이번 달
-  for (let d = 1; d <= last; d++) addCell(d, new Date(y, m, d), false);
-  // 다음 달
+  for (let d=1; d<=last; d++) addCell(d, new Date(y,m,d), false);
   const total = start + last;
   const tail  = (7 - (total % 7)) % 7;
-  for (let i = 1; i <= tail; i++) addCell(i, new Date(y, m + 1, i), true);
+  for (let i=1;i<=tail;i++) addCell(i, new Date(y,m+1,i), true);
 }
 
-/* ===== Export / Import (JSON 백업) ===== */
-const exportBtn = document.getElementById('exportBtn');
-const importFile = document.getElementById('importFile');
-
-function exportTasks(){
-  const data = load();
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'study-planner-tasks.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(a.href);
-}
-
-function safeArray(v){ return Array.isArray(v) ? v : []; }
-function mergeById(oldArr, newArr){
-  const map = new Map(oldArr.map(x => [x.id, x]));
-  for (const n of newArr){
-    if (!n || !n.id) continue;
-    // 기본 필드 보정
-    map.set(n.id, {
-      id: n.id,
-      subject: n.subject || '',
-      name: n.name || '',
-      memo: n.memo || '',
-      date: n.date || '',
-      done: !!n.done,
-      createdAt: Number(n.createdAt) || Date.now()
-    });
+// 그리드 바깥 클릭 시 툴팁 닫기
+document.addEventListener("click", (ev)=>{
+  if (!grid.contains(ev.target)) {
+    tip.hidden = true;
+    tip.removeAttribute('data-for');
   }
-  return [...map.values()];
-}
+}, {passive:true});
 
-function importTasks(file){
-  const reader = new FileReader();
-  reader.onload = () => {
-    try{
-      const parsed = JSON.parse(reader.result);
-      const merged = mergeById(load(), safeArray(parsed));
-      save(merged);
-      renderTodos();
-      drawCalendar();
-      alert('가져오기가 완료되었습니다.');
-    }catch(e){
-      alert('가져오기 실패: JSON 형식이 올바르지 않습니다.');
-    }
-  };
-  reader.readAsText(file, 'utf-8');
-}
-
-if (exportBtn) exportBtn.onclick = exportTasks;
-if (importFile) importFile.onchange = (e) => {
-  const f = e.target.files?.[0];
-  if (f) importTasks(f);
-  e.target.value = ''; // 동일 파일 재선택 가능하게
-};
-
-/* 초기화 */
-renderTodos();
-drawCalendar();
+/* ---------- Boot ---------- */
+ensureSignedIn();
