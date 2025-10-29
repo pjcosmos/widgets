@@ -1,152 +1,152 @@
-/* ===== Study Planner - Transparent Notion Theme (Tooltip Final Fix) ===== */
-:root {
-  --text: #333;
-  --muted: #999;
-  --line: rgba(0, 0, 0, 0.1);
-  --acc: #000;
-  --radius: 16px;
-  --shadow: 0 4px 16px rgba(0, 0, 0, .08);
-}
-/* 다크모드 변수 */.del-btn.confirming {
-  color: #fff !important;
-  background: #e57373;
-  border-radius: 8px;
-  padding: 4px 8px;
+/* ===== Study Planner - Transparent + Leopard (MZ) ===== */
+:root{
+  --text:#2c2b29; --muted:#7a726a; --line:rgba(0,0,0,.10); --acc:#000;
+  --radius:16px; --shadow:0 10px 24px rgba(0,0,0,.10);
+  /* 레오파드 패턴 URL (원하면 교체 가능) */
+  --leopard:url("https://i.ibb.co/9TqGkGb/leopard-pattern.png");
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #eee;
-    --muted: #888;
-    --line: rgba(255, 255, 255, 0.15);
-    --acc: #fff;
+@media (prefers-color-scheme: dark){
+  :root{
+    --text:#eee; --muted:#9a948e; --line:rgba(255,255,255,.15); --acc:#fff;
   }
 }
 
-* { box-sizing: border-box; }
-body {
-  font: 14px/1.5 "Pretendard", sans-serif;
-  color: var(--text);
-  background: transparent;
-  margin: 0;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:transparent;
+  color:var(--text);
+  font:14px/1.55 "Pretendard", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
 }
 
-.app {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 24px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+.app{
+  width:100%; max-width:760px; margin:0 auto; padding:24px 14px;
+  display:flex; flex-direction:column; gap:22px;
 }
 
-.card {
-  width: 100%;
-  border-radius: var(--radius);
-  padding: 18px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, currentColor 5%, transparent);
+/* ===== 카드 공통 ===== */
+.card{
+  position:relative;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px;
+  /* 은은한 레오파드 질감 + 소프트 유리 효과 */
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,.34), rgba(255,255,255,.28)),
+    var(--leopard);
+  background-size:220px;
+  background-blend-mode:soft-light;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  position: relative;
+  box-shadow:var(--shadow);
 }
 
-.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.card-head strong { font-weight: 800; font-size: 16px; }
+/* 캘린더/할일 카드 각각 살짝 톤 차이 */
+.card.calendar{ background-size:210px }
+.card.todo{ background-size:260px }
 
-.nav button {
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--text);
-  width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
-  transition: .15s ease;
+/* 헤더 & 버튼 */
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
+.card-head strong{font-weight:800; font-size:16px}
+
+.glass-btn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.38);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color:var(--text);
+  height:36px; min-width:36px; padding:0 10px;
+  border-radius:10px; cursor:pointer; transition:.15s ease;
 }
-.nav button:hover { background: var(--line); }
+.glass-btn:hover{ background:rgba(0,0,0,.16); color:#fff }
+.icon-btn{ display:inline-flex; align-items:center; justify-content:center }
 
-.weekday, .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-.weekday div { font-size: 12px; color: var(--muted); text-align: center; font-weight: 500; }
+/* 네비 버튼 */
+.nav{ display:flex; gap:8px }
+.nav .glass-btn{ width:36px }
 
-.cell {
-  height: 48px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  position: relative; user-select: none; transition: .12s ease;
-  border: 1px solid transparent;
+/* ===== 캘린더 ===== */
+.weekday,.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px }
+.weekday div{ font-size:12px; color:var(--muted); text-align:center; font-weight:600 }
+
+.cell{
+  height:48px; border-radius:12px; border:1px solid transparent;
+  display:flex; align-items:center; justify-content:center;
+  user-select:none; transition:.12s ease; position:relative;
 }
-.cell:hover { background-color: var(--line); }
-.cell.muted { color: var(--muted); }
-.cell.today { font-weight: 700; border-color: var(--muted); }
-.cell.hasTasks::after {
-  content: ""; position: absolute; bottom: 6px; width: 5px; height: 5px;
-  border-radius: 50%; background: var(--acc);
+.cell:hover{ background-color:rgba(0,0,0,.08) }
+.cell.muted{ color:var(--muted) }
+.cell.today{ font-weight:800; border-color:var(--muted) }
+.cell.hasTasks::after{
+  content:""; position:absolute; bottom:6px; width:6px; height:6px;
+  border-radius:50%; background:#000;
 }
-.cell.selected {
-  background-color: var(--acc);
-  color: var(--bg, #fff);
-  font-weight: 700;
+.cell.selected{
+  background:rgba(0,0,0,.9);
+  color:#f6e9d0;
+  font-weight:800; border:none;
 }
-@media (prefers-color-scheme: dark) { .cell.selected { color: #000; }}
+@media (prefers-color-scheme: dark){ .cell.selected{ color:#000; } }
 
-/* ✅ 툴팁 스타일 (최종 수정) */
-.tooltip {
-  position: absolute;
-  z-index: 10;
-  padding: 8px 12px;
-  background: var(--acc);
-  color: var(--bg, #fff);
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.4;
-  max-width: 240px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
-  white-space: normal;
-  
-  /* ✅ 표시/숨김 제어 (visibility 제거) */
-  opacity: 0;
-  pointer-events: none; /* 숨겨졌을 때 클릭 안 되게 */
-  transform: translateY(5px);
-  transition: opacity .1s ease, transform .1s ease;
+/* ===== Tooltip ===== */
+.tooltip{
+  position:absolute; z-index:10; padding:8px 12px;
+  background:#000; color:#f6e9d0; border-radius:10px;
+  font-size:13px; line-height:1.45; max-width:240px;
+  box-shadow:0 6px 18px rgba(0,0,0,.25);
+  white-space:normal;
+  opacity:0; pointer-events:none; transform:translateY(5px);
+  transition:opacity .12s ease, transform .12s ease;
 }
-@media (prefers-color-scheme: dark) { .tooltip { color: #000; }}
+.tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0) }
+@media (prefers-color-scheme: dark){ .tooltip{ color:#000 }}
 
-/* ✅ .visible 클래스가 붙었을 때 보이도록 변경 */
-.tooltip.visible {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
+/* ===== Todo ===== */
+.input-box{
+  display:grid; grid-template-columns:1fr 1fr 1fr auto;
+  gap:10px; margin-bottom:12px;
+}
+.input-box input{
+  border:1px solid var(--line); background:rgba(255,255,255,.35);
+  border-radius:12px; padding:12px; color:inherit; font:inherit; outline-offset:2px;
+}
+.input-box input:focus{ border-color:var(--acc) }
+
+#todoList{ list-style:none; margin:0; padding:0 }
+#todoList li{
+  border:1px solid var(--line);
+  background:
+    linear-gradient(to bottom right, rgba(255,255,255,.45), rgba(255,255,255,.25)),
+    var(--leopard);
+  background-size:260px; background-blend-mode:soft-light;
+  border-radius:14px; padding:10px 12px;
+  display:grid; grid-template-columns:auto 1fr auto auto;
+  align-items:center; gap:12px; margin-bottom:8px;
+}
+#todoList .text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600 }
+
+.chk{
+  width:18px; height:18px; appearance:none; display:grid; place-content:center; cursor:pointer;
+  border:1.8px solid var(--muted); border-radius:6px; background:transparent;
+}
+.chk:checked{ border-color:#000; background:#000 }
+.chk:checked::after{
+  content:""; width:9px; height:9px;
+  clip-path: polygon(14% 44%, 0 62%, 41% 100%, 100% 22%, 82% 6%, 39% 72%);
+  background:#f6e9d0;
+}
+@media (prefers-color-scheme: dark){ .chk:checked::after{ background:#000 } }
+
+.edit-btn,.del-btn{
+  border:0; background:transparent; cursor:pointer; font-weight:800;
+  color:var(--muted); padding:4px 6px; border-radius:8px;
+}
+.edit-btn:hover{ background:rgba(0,0,0,.08); color:#000 }
+.del-btn{ color:#e57373 }
+.del-btn.confirming{
+  color:#fff !important; background:#e57373; padding:4px 10px;
 }
 
-.input-box { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 12px; }
-.input-box input, .icon-btn {
-  border: 1px solid var(--line);
-  background-color: transparent;
-  border-radius: 12px;
-  padding: 12px;
-  color: inherit;
-  font: inherit;
-  outline-offset: 2px;
-}
-.input-box input:focus { border-color: var(--acc); }
-
-.icon-btn { width: 46px; height: 46px; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-
-#todoList { list-style: none; margin: 0; padding: 0; }
-#todoList li {
-  background: transparent; border: 1px solid var(--line); border-radius: 12px;
-  padding: 10px 12px; display: grid; grid-template-columns: auto 1fr auto auto;
-  align-items: center; gap: 12px; margin-bottom: 8px;
-}
-#todoList .text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-
-.chk {
-  width: 18px; height: 18px; appearance: none;
-  border: 1.8px solid var(--muted); border-radius: 6px;
-  display: grid; place-content: center; cursor: pointer;
-}
-.chk:checked { border-color: var(--acc); background: var(--acc); }
-.chk:checked::after { content: ""; width: 9px; height: 9px; clip-path: polygon(14% 44%, 0 62%, 41% 100%, 100% 22%, 82% 6%, 39% 72%); background: var(--bg, #fff); }
-@media (prefers-color-scheme: dark) { .chk:checked::after { background: #000; }}
-
-.edit-btn, .del-btn { border: 0; background: transparent; cursor: pointer; font-weight: 700; color: var(--muted); padding: 4px; }
-.del-btn { color: #e57373; }
-.hint { text-align: center; color: var(--muted); margin-top: 6px; font-size: 13px; }
+.hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px }
