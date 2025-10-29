@@ -1,4 +1,4 @@
-/* ===== Study Planner - Transparent Notion (BUG FIXED) ===== */
+/* ===== Study Planner - Transparent Notion (with Tooltip) ===== */
 
 // ---------- State ----------
 let tasks = [];
@@ -17,8 +17,8 @@ const grid = document.getElementById("grid");
 const label = document.getElementById("calLabel");
 const prev = document.getElementById("prevMon");
 const next = document.getElementById("nextMon");
-const tip = document.getElementById("tooltip");
 const wdEl = document.getElementById("wd");
+const tooltip = document.getElementById("tooltip"); // ✅ 툴팁 DOM 추가
 
 // ---------- Utils ----------
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }));
@@ -28,7 +28,7 @@ const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOStr
 const saveTasks = () => localStorage.setItem('plannerTasks', JSON.stringify(tasks));
 const loadTasks = () => JSON.parse(localStorage.getItem('plannerTasks') || '[]');
 
-// ---------- CRUD ----------
+// ---------- CRUD Functions ----------
 function addOrUpdateTask() {
   const name = taskName.value.trim();
   if (!name) return alert("과제명은 필수입니다.");
@@ -84,12 +84,17 @@ function renderTodos() {
 
   items.forEach(t => {
     const li = document.createElement("li");
+    const subjText = t.subject ? `[${t.subject}] ` : '';
+    const dateText = t.date ? `${t.date.slice(5).replace('-', '/')} ` : '';
+    const memoText = t.memo ? ` · ${t.memo}` : '';
+    
     li.innerHTML = `
-      <input type="checkbox" class="chk" onchange="toggleTask('${t.id}')">
-      <span class="text">${t.date ? `${t.date.slice(5).replace('-', '/')} ` : ''}${t.subject ? `[${t.subject}] ` : ''}${t.name}${t.memo ? ` · ${t.memo}` : ''}</span>
+      <input type="checkbox" class="chk">
+      <span class="text">${dateText}${subjText}${t.name}${memoText}</span>
       <button class="edit-btn">수정</button>
       <button class="del-btn">삭제</button>
     `;
+    li.querySelector('.chk').onchange = () => toggleTask(t.id);
     li.querySelector('.edit-btn').onclick = () => enterEditMode(t);
     li.querySelector('.del-btn').onclick = () => deleteTask(t.id);
     listEl.append(li);
@@ -99,45 +104,73 @@ function renderTodos() {
 function drawCalendar() {
   grid.innerHTML = "";
   label.textContent = new Intl.DateTimeFormat("ko", { year: "numeric", month: "long" }).format(cur);
-
-  const y = cur.getFullYear(), m = cur.getMonth();
-  const firstDay = new Date(y, m, 1);
-  const lastDay = new Date(y, m + 1, 0);
-  const startDay = (firstDay.getDay() + 6) % 7; // 월요일=0
+  const todayISO = iso(new Date());
 
   const byDate = tasks.reduce((acc, t) => {
     if (t.date) (acc[t.date] ||= []).push(t);
     return acc;
   }, {});
 
-  const calendarDays = [];
-  // 이전 달
-  for (let i = startDay; i > 0; i--) {
-    const d = new Date(y, m, 1 - i);
-    calendarDays.push({ date: d, muted: true });
-  }
-  // 현재 달
-  for (let i = 1; i <= lastDay.getDate(); i++) {
-    const d = new Date(y, m, i);
-    calendarDays.push({ date: d, muted: false });
-  }
-  // 다음 달
-  const remaining = 42 - calendarDays.length;
-  for (let i = 1; i <= remaining; i++) {
-    const d = new Date(y, m + 1, i);
-    calendarDays.push({ date: d, muted: true });
-  }
+  const year = cur.getFullYear();
+  const month = cur.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const startDate = new Date(firstDayOfMonth);
+  startDate.setDate(startDate.getDate() - (firstDayOfMonth.getDay() + 6) % 7);
 
-  calendarDays.forEach(day => {
-    const dISO = iso(day.date);
+  for (let i = 0; i < 42; i++) {
+    const cellDate = new Date(startDate);
+    cellDate.setDate(startDate.getDate() + i);
+    const dISO = iso(cellDate);
     const cell = document.createElement("div");
-    cell.className = `cell ${day.muted ? 'muted' : ''} ${dISO === iso(new Date()) ? 'today' : ''} ${dISO === selectedISO ? 'selected' : ''} ${byDate[dISO] ? 'hasTasks' : ''}`;
-    cell.textContent = day.date.getDate();
+    cell.className = "cell";
+    
+    if (cellDate.getMonth() !== month) cell.classList.add("muted");
+    if (dISO === todayISO) cell.classList.add("today");
+    if (dISO === selectedISO) cell.classList.add("selected");
+    
+    // ✅ 툴팁 이벤트 리스너 추가
+    const tasksForDay = byDate[dISO];
+    if (tasksForDay) {
+      cell.classList.add("hasTasks");
+      cell.addEventListener("mouseenter", (e) => showTooltip(e.currentTarget, tasksForDay));
+      cell.addEventListener("mouseleave", hideTooltip);
+    }
+    
+    cell.textContent = cellDate.getDate();
     cell.onclick = () => { selectedISO = dISO; drawCalendar(); };
-    grid.append(cell);
-  });
+    grid.appendChild(cell);
+  }
 }
 
+// ✅ 툴팁 보여주기 함수
+function showTooltip(cell, tasksForDay) {
+  tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('\n');
+  tooltip.hidden = false;
+
+  const cellRect = cell.getBoundingClientRect();
+  const calendarRect = cell.closest('.calendar').getBoundingClientRect();
+  
+  // 툴팁 위치 계산
+  let top = cellRect.bottom - calendarRect.top + 8; // 기본은 아래
+  let left = cellRect.left - calendarRect.left;
+
+  // 툴팁이 카드 밖으로 나가지 않도록 조정
+  const tooltipRect = tooltip.getBoundingClientRect();
+  if (left + tooltipRect.width > calendarRect.width) {
+    left = calendarRect.width - tooltipRect.width - 10;
+  }
+  if (top + tooltipRect.height > calendarRect.height) {
+    top = cellRect.top - calendarRect.top - tooltipRect.height - 8; // 위로 붙이기
+  }
+
+  tooltip.style.top = `${top}px`;
+  tooltip.style.left = `${left}px`;
+}
+
+// ✅ 툴팁 숨기기 함수
+function hideTooltip() {
+  tooltip.hidden = true;
+}
 
 // ---------- Initializer ----------
 function init() {
@@ -145,10 +178,11 @@ function init() {
   ["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
     const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
   });
-  
+
   dateBtn.onclick = addOrUpdateTask;
-  taskName.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
-  memo.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
+  const enterHandler = e => { if (e.key === "Enter") addOrUpdateTask(); };
+  taskName.addEventListener("keydown", enterHandler);
+  memo.addEventListener("keydown", enterHandler);
   prev.onclick = () => { cur.setMonth(cur.getMonth() - 1); drawCalendar(); };
   next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
 
