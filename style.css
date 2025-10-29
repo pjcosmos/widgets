@@ -1,43 +1,54 @@
-/* ===== Study Planner - Transparent + Leopard (MZ Final, Compact) ===== */
+/* ===== Study Planner - Leopard Luxe (AI Glow, Compact + Mini) ===== */
+
+/* ---------- Theme Tokens ---------- */
 :root{
-  --text:#2c2b29;
-  --muted:#7a726a;
+  --text:#252422;
+  --muted:#847c74;
   --line:rgba(0,0,0,.10);
-  --acc:#000;
+  --acc:#111;
   --radius:16px;
-  --shadow:0 10px 24px rgba(0,0,0,.10);
+  --shadow:0 10px 28px rgba(0,0,0,.10);
 
-  /* 외부 이미지 비활성화(안 씀) */
-  --leopard:none;
+  /* Leopard palette (2nd photo vibe) */
+  --leo-pink:#f6c9cf;        /* strawberry milk */
+  --leo-black:#161616;       /* outer rosette */
+  --leo-brown:#a55a2e;       /* inner rosette */
+  --leo-scale:180px;         /* pattern scale */
+  --leo-border:12px;         /* border thickness */
 
-  /* Leopard (2nd photo vibe) */
-  --leo-pink:#f6c9cf;        /* 딸기우유 베이스 */
-  --leo-black:#161616;       /* 바깥 검정 반점 */
-  --leo-brown:#a55a2e;       /* 안쪽 갈색 반점 */
-  --leo-scale:180px;         /* 패턴 크기 */
-  --leo-border:10px;         /* 카드/입력/할일 테두리 두께(컴팩트) */
+  /* Calendar accent */
+  --pill:#f3ece7;            /* subtle pill bg */
+  --ink:#0f0f0f;             /* deep ink */
+  --accent:#d86c6c;          /* soft coral accent for actions */
+  --glow: 0 10px 22px rgba(216,108,108,.20);
 }
-
 @media (prefers-color-scheme: dark){
-  :root{ --text:#eee; --muted:#9a948e; --line:rgba(255,255,255,.15); --acc:#fff; }
+  :root{
+    --text:#eee;
+    --muted:#a59e97;
+    --line:rgba(255,255,255,.18);
+    --acc:#fff;
+    --pill:#1f1f1f;
+    --ink:#fff;
+    --accent:#ff8a8a;
+    --glow: 0 10px 22px rgba(255,138,138,.25);
+  }
 }
 
+/* ---------- Base ---------- */
 *{ box-sizing:border-box }
 html,body{ height:100% }
 body{
   margin:0; background:transparent; color:var(--text);
   font:14px/1.55 "Pretendard", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+.app{
+  width:100%; max-width:760px; margin:0 auto;
+  padding:16px 12px; display:flex; flex-direction:column; gap:16px;
 }
 
-.app{ width:100%; max-width:760px; margin:0 auto; padding:16px 12px;
-  display:flex; flex-direction:column; gap:14px; }
-
-/* ===== Card ===== */
-.card{ position:relative; border-radius:14px; padding:14px; box-shadow:var(--shadow); }
-.card.calendar, .card.todo{ background:#fff; border:none; }
-.card.calendar > *, .card.todo > *{ position:relative; z-index:2; }
-
-/* 레오파드 보더(바깥 레이어) */
+/* ---------- Leopard SVG Pattern (inline, no network) ---------- */
 :root{
   --leopard-roses: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>\
@@ -58,88 +69,124 @@ body{
 </svg>");
 }
 
-/* 바깥 패턴 & 안쪽 흰 패널로 ‘테두리만’ 효과 */
-.card.calendar::before, .card.todo::before{
-  content:""; position:absolute; inset:0; z-index:0;
-  border-radius:14px; background:var(--leopard-roses); background-size:var(--leo-scale);
-  pointer-events:none;
+/* ---------- Cards (white inside, leopard border only) ---------- */
+.card{
+  position:relative; border:none; border-radius:var(--radius);
+  padding:16px; box-shadow:var(--shadow); background:#fff;
 }
-.card.calendar::after, .card.todo::after{
-  content:""; position:absolute; inset:var(--leo-border); z-index:1;
-  border-radius:calc(14px - var(--leo-border)); background:#fff;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); pointer-events:none;
+.card > *{ position:relative; z-index:2; }
+.card::before{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  border-radius:var(--radius); background:var(--leopard-roses); background-size:var(--leo-scale);
+}
+.card::after{
+  content:""; position:absolute; inset:var(--leo-border); z-index:1; pointer-events:none;
+  border-radius:calc(var(--radius) - var(--leo-border));
+  background:#fff; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
 }
 
-/* ===== Header & Buttons ===== */
-.card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px }
-.card-head strong{ font-weight:800; font-size:15px }
+/* ---------- Header & Month Label ---------- */
+.card-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;
+}
+#calLabel{
+  display:inline-flex; align-items:center; gap:.6ch;
+  padding:8px 14px; border-radius:999px;
+  background:var(--pill);
+  color:var(--ink); font-weight:900; letter-spacing:.2px;
+  line-height:1; position:relative;
+}
+/* “AI Glow” underlight */
+#calLabel::after{
+  content:""; position:absolute; inset:-2px; z-index:-1; border-radius:999px;
+  box-shadow:var(--glow); opacity:.55;
+}
+
+/* ---------- Buttons ---------- */
 .nav{ display:flex; gap:8px }
-.glass-btn{ height:32px; min-width:32px; padding:0 8px; border-radius:9px;
-  border:1px solid var(--line); background:rgba(255,255,255,.35);
+.glass-btn,
+.icon-btn{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  color:var(--text); cursor:pointer; transition:.15s ease; }
-.nav .glass-btn{ width:30px; height:30px; }
-.glass-btn:hover{ background:rgba(0,0,0,.16); color:#fff }
-.icon-btn{ display:inline-flex; align-items:center; justify-content:center }
-
-/* ===== Calendar Grid ===== */
-.weekday, .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px }
-.weekday div{ font-size:11px; color:var(--muted); text-align:center; font-weight:600 }
-.cell{
-  height:40px; border-radius:10px; border:1px solid transparent;
-  display:flex; align-items:center; justify-content:center;
-  user-select:none; transition:.12s ease; position:relative;
+  color:var(--text); border-radius:12px; cursor:pointer; transition:.18s ease;
+  height:32px; min-width:32px; padding:0 8px; display:inline-flex; align-items:center; justify-content:center;
 }
-.cell:hover{ background-color:rgba(0,0,0,.06) }
+.nav .glass-btn{ width:32px; }
+.glass-btn:hover,.icon-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.12) }
+.glass-btn:active,.icon-btn:active{ transform:translateY(0) scale(.98) }
+
+/* ---------- Calendar Grid ---------- */
+.weekday,.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px }
+.weekday div{ font-size:11px; color:var(--muted); text-align:center; font-weight:700; letter-spacing:.2px }
+
+.cell{
+  height:40px; border-radius:12px; border:1px solid transparent;
+  display:flex; align-items:center; justify-content:center;
+  user-select:none; transition:.12s ease; position:relative; isolation:isolate;
+}
+.cell:hover{ background-color:rgba(0,0,0,.05) }
 .cell.muted{ color:var(--muted) }
-.cell.today{ font-weight:800; border-color:var(--muted) }
+.cell.today{
+  font-weight:900;
+  outline:2px solid rgba(0,0,0,.10);
+  outline-offset:-2px;
+  background:linear-gradient(180deg, rgba(0,0,0,.04), transparent);
+}
 .cell.hasTasks::after{
   content:""; position:absolute; bottom:6px; width:6px; height:6px;
   border-radius:50%; background:#000;
 }
-.cell.selected{ background:#111; color:#f6e9d0; font-weight:800; border:none; }
+.cell.selected{
+  background:#0f0f0f; color:#f6e9d0; font-weight:900; border:none;
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
 @media (prefers-color-scheme: dark){ .cell.selected{ color:#000 } }
 
-/* ===== Tooltip (작은 창) ===== */
-/* 뷰포트 기준 고정 위치가 기본. JS가 필요 시 absolute로 전환 */
+/* ---------- Tooltip (small popup) ---------- */
+/* JS가 fixed 좌표로 배치. 시각만 고급스럽게 */
 .tooltip{
-  position: fixed; z-index: 9999 !important;
-  padding:6px 10px; border-radius:10px; font-size:12px; line-height:1.4;
+  position:fixed; z-index:9999 !important;
+  padding:8px 10px; border-radius:12px; font-size:12px; line-height:1.4;
   background:
-    linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)),
+    linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.90)),
     var(--leopard-roses);
   background-size:auto, var(--leo-scale);
-  color:#111; border:1px solid rgba(0,0,0,.12);
-  box-shadow:0 4px 14px rgba(0,0,0,.18);
+  color:#111; border:1px solid rgba(0,0,0,.10);
+  box-shadow:0 8px 22px rgba(0,0,0,.16);
   white-space:normal; max-width:240px;
-  opacity:0; pointer-events:none; transform:translateY(5px);
-  transition:opacity .12s ease, transform .12s ease;
+  opacity:0; pointer-events:none; transform:translateY(6px);
+  transition:opacity .14s ease, transform .14s ease, filter .14s ease;
+  filter: saturate(.9);
 }
-.tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0) }
+.tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0); filter: saturate(1) }
 
-/* ===== Inputs & Todo ===== */
+/* ---------- Input Row (Subject / Task / Memo / Add) ---------- */
 .input-box{
-  display:grid; grid-template-columns:1fr 1fr 1fr auto;
-  gap:8px; margin-bottom:10px;
+  display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; margin-bottom:10px; align-items:center;
 }
 .input-box input{
-  border:var(--leo-border) solid transparent; border-radius:10px; padding:10px;
+  min-width:0; width:100%; padding:10px 12px; border-radius:12px;
+  border:var(--leo-border) solid transparent;
   background:#fff padding-box, var(--leopard-roses) border-box; background-size:var(--leo-scale);
-  color:inherit; font:inherit; outline-offset:2px;
+  color:inherit; font:inherit; outline-offset:2px; transition:border-color .15s ease, box-shadow .15s ease;
 }
-.input-box input:focus{ outline:2px solid var(--acc) }
+.input-box input:focus{ box-shadow:0 0 0 3px rgba(216,108,108,.18) }
+.icon-btn#dateBtn{ width:42px; height:42px; padding:0; border-radius:12px }
 
+/* ---------- Todo List ---------- */
 #todoList{ list-style:none; margin:0; padding:0 }
 #todoList li{
   border:var(--leo-border) solid transparent; border-radius:12px; padding:8px 10px;
   background:transparent padding-box, var(--leopard-roses) border-box; background-size:var(--leo-scale);
   display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:10px; margin-bottom:8px;
 }
-#todoList .text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; font-size:13px }
+#todoList .text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; font-size:13px }
 
+/* check */
 .chk{
   width:16px; height:16px; appearance:none; display:grid; place-content:center; cursor:pointer;
-  border:1.6px solid var(--muted); border-radius:6px; background:transparent;
+  border:1.6px solid var(--muted); border-radius:6px; background:transparent; transition:all .12s ease;
 }
 .chk:checked{ border-color:#000; background:#000 }
 .chk:checked::after{
@@ -149,76 +196,48 @@ body{
 }
 @media (prefers-color-scheme: dark){ .chk:checked::after{ background:#000 } }
 
-.edit-btn, .del-btn{
+/* actions */
+.edit-btn,.del-btn{
   border:0; background:transparent; cursor:pointer; font-weight:800;
-  color:var(--muted); padding:4px 6px; border-radius:8px;
+  color:var(--muted); padding:4px 6px; border-radius:8px; transition:.12s ease;
 }
-.edit-btn:hover{ background:rgba(0,0,0,.08); color:#000 }
-.del-btn{ color:#e57373 }
+.edit-btn:hover{ background:rgba(0,0,0,.06); color:#000 }
+.del-btn{ color:#d86c6c }
+.del-btn:hover{ background:rgba(216,108,108,.10) }
 
-.hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px }
+.hint{ text-align:center; color:var(--muted); margin-top:4px; font-size:12px }
 
-/* ===== MINI WIDGET PRESET (超컴팩트) ===== */
-.app.mini{
-  max-width: 360px;
-  padding: 10px 8px;
-  gap: 10px;
-}
+/* ---------- Mini Widget Preset (ultra compact) ---------- */
+.app.mini{ max-width:360px; padding:10px 8px; gap:10px; --leo-border:8px; }
+.app.mini .card{ padding:10px; border-radius:12px; box-shadow:0 6px 14px rgba(0,0,0,.08) }
+.app.mini .card::after{ inset:8px; border-radius:calc(12px - 8px) }
+.app.mini .card-head{ margin-bottom:4px }
+.app.mini #calLabel{ padding:6px 10px; font-size:12px }
+.app.mini .glass-btn{ height:26px; min-width:26px; padding:0 6px; border-radius:9px; font-size:12px }
+.app.mini .nav .glass-btn{ width:26px; height:26px }
+.app.mini .weekday,.app.mini .grid{ gap:4px }
+.app.mini .weekday div{ font-size:10px }
+.app.mini .cell{ height:28px; border-radius:8px; font-size:12px }
+.app.mini .cell.hasTasks::after{ width:4px; height:4px; bottom:4px }
+.app.mini .tooltip{ padding:6px 8px; font-size:11px; max-width:160px; box-shadow:0 3px 10px rgba(0,0,0,.15) }
 
-/* 카드 여백/라운드 축소 */
-.app.mini .card{ padding:10px; border-radius:12px; box-shadow: 0 6px 14px rgba(0,0,0,.08); }
-.app.mini .card.calendar::after,
-.app.mini .card.todo::after{ inset: 8px; border-radius: calc(12px - 8px); }
+/* mini input grid: 1행(과목/과제/버튼) + 2행(메모 전체) */
+.app.mini .input-box{ grid-template-columns:1fr 1fr auto; grid-auto-rows:auto; gap:6px; margin-bottom:8px }
+.app.mini #memo{ grid-column:1 / span 3; grid-row:2; min-width:0 }
+.app.mini #dateBtn{ grid-column:3; grid-row:1; width:34px; height:34px }
+.app.mini #todoList li{ padding:6px 8px; border-radius:10px; gap:8px }
+.app.mini #todoList .text{ font-size:12px }
+.app.mini .chk{ width:14px; height:14px; border-width:1.4px }
+.app.mini .chk:checked::after{ width:7px; height:7px }
+.app.mini .edit-btn,.app.mini .del-btn{ font-size:12px; padding:3px 5px; border-radius:6px }
 
-/* 헤더 줄이기 */
-.app.mini .card-head{ margin-bottom:4px; }
-.app.mini .card-head strong{ font-size:13px; font-weight:800; }
-
-/* 버튼 더 작게 */
-.app.mini .glass-btn{ height:26px; min-width:26px; padding:0 6px; border-radius:8px; font-size:12px; }
-.app.mini .nav .glass-btn{ width:26px; height:26px; }
-
-/* 캘린더 그리드 컴팩트 */
-.app.mini .weekday, 
-.app.mini .grid{ gap:4px; }
-.app.mini .weekday div{ font-size:10px; }
-.app.mini .cell{
-  height:28px; border-radius:8px; font-size:12px;
-}
-.app.mini .cell.hasTasks::after{ width:4px; height:4px; bottom:4px; }
-.app.mini .cell.selected{ font-weight:800; }
-
-/* 툴팁도 미니 */
-.app.mini .tooltip{
-  padding:5px 8px; font-size:11px; max-width:160px; box-shadow:0 3px 10px rgba(0,0,0,.15);
-}
-
-/* 입력 박스 더 촘촘하게 */
-.app.mini .input-box{
-  grid-template-columns: 1fr 1fr auto;  /* 과목 입력 생략 시: 과목칸을 줄이고 싶으면 이 줄 유지 */
-  gap:6px; margin-bottom:8px;
-}
-.app.mini .input-box input{ padding:8px; border-radius:8px; font-size:12px; }
-
-/* 투두 항목도 컴팩트 */
-.app.mini #todoList li{
-  padding:6px 8px; border-radius:10px; gap:8px;
-  grid-template-columns: auto 1fr auto auto;
-}
-.app.mini #todoList .text{ font-size:12px; }
-
-/* 체크박스/버튼 축소 */
-.app.mini .chk{ width:14px; height:14px; border-width:1.4px; }
-.app.mini .chk:checked::after{ width:7px; height:7px; }
-
-.app.mini .edit-btn, 
-.app.mini .del-btn{ font-size:12px; padding:3px 5px; border-radius:6px; }
-
-/* 테두리 두께도 살짝 얇게 */
-.app.mini :root, 
-:root .app.mini{ --leo-border: 8px; }
-
-/* 아주 좁은 영역에서 자동 미니 적용(안전망) */
+/* ---------- Safety: avoid overflow in very narrow iframes ---------- */
 @media (max-width: 380px){
-  .app{ max-width: 340px; }
+  .app{ max-width:340px }
+}
+
+/* ---------- Optional: slightly nicer focus rings ---------- */
+:where(button, [type="button"], [type="text"], input):focus{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(15,15,15,.08);
 }
