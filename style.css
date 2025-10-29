@@ -150,3 +150,58 @@ body{
 }
 
 .hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px }
+
+/* ===== Leopard Patch (CSS-only, no JS/HTML change) ===== */
+
+/* 1) 외부 이미지 대신 내장 SVG 패턴을 변수로 정의 */
+:root{
+  --leopard: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">\
+<rect width="120" height="120" fill="transparent"/>\
+<g fill="%23000" fill-opacity="0.9">\
+<path d="M12 18c9 0 14 7 10 13s-17 6-19 0 0-13 9-13z"/>\
+<path d="M52 12c10 0 15 8 11 14s-18 7-20 0 2-14 9-14z"/>\
+<path d="M92 20c9 0 13 7 9 12s-16 6-18 0 1-12 9-12z"/>\
+<path d="M24 62c10 0 15 8 11 14s-18 7-20 0 2-14 9-14z"/>\
+<path d="M70 56c9 0 13 7 9 12s-16 6-18 0 1-12 9-12z"/>\
+<path d="M102 74c8 0 12 6 8 12s-15 6-17 0 1-12 9-12z"/>\
+<path d="M34 28c7 0 10 5 7 10s-12 5-13 0 0-10 6-10z"/>\
+<path d="M78 86c7 0 10 5 7 10s-12 5-13 0 0-10 6-10z"/>\
+<path d="M10 94c7 0 10 5 7 10s-12 5-13 0 0-10 6-10z"/>\
+</g></svg>');
+}
+
+/* 2) 캘린더/할일 카드에만 레오파드 질감 적용 (배경색은 그대로) */
+.card.calendar,
+.card.todo{
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.34), rgba(255,255,255,0.28)), /* 은은한 유리 레이어 */
+    var(--leopard);
+  background-size: 220px;
+  background-repeat: repeat;
+  background-blend-mode: soft-light;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* 3) 버튼 유리 느낌(디자인만, 동작 동일) */
+.nav button,
+.icon-btn{
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.38);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--text);
+  border-radius: 10px;
+  transition: .15s ease;
+}
+.nav button:hover,
+.icon-btn:hover{
+  background: rgba(0,0,0,0.16);
+  color: #fff;
+}
+
+/* 4) 선택 날짜/점 표시만 살짝 또렷하게(기능 동일) */
+.cell.hasTasks::after{ width:6px; height:6px; background:#000; }
+.cell.selected{ background: rgba(0,0,0,0.9); color:#f6e9d0; border:none; font-weight:800; }
+
