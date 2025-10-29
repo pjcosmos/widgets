@@ -181,7 +181,27 @@ body{
   background:transparent padding-box, var(--leopard-roses) border-box; background-size:var(--leo-scale);
   display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:10px; margin-bottom:8px;
 }
-#todoList .text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; font-size:13px }
+#todoList .text{
+  white-space: nowrap;          /* 줄바꿈 금지 → 한 줄 유지 */
+  overflow-x: auto;             /* 가로 스크롤 */
+  overflow-y: hidden;           /* 세로 스크롤 안 생기게 */
+  text-overflow: none;          /* ... 생략 방지 */
+  display: block;               /* 스크롤 가능한 박스 */
+  padding-bottom: 2px;          /* 스크롤바 안겹치게 살짝 여유 */
+  scrollbar-width: thin;        /* 파이어폭스 */
+}
+
+/* 크롬/사파리 전용 스크롤 세련되게 */
+#todoList .text::-webkit-scrollbar{
+  height: 4px;
+}
+#todoList .text::-webkit-scrollbar-thumb{
+  background: rgba(0,0,0,.25);
+  border-radius: 3px;
+}
+#todoList .text::-webkit-scrollbar-track{
+  background: transparent;
+}
 
 /* check */
 .chk{
