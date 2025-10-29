@@ -1,14 +1,12 @@
-/* ===== Study Planner - LocalStorage Version =====
-    - Firebase 없이 브라우저 자체에 데이터를 저장합니다.
-    - 다른 기기와 동기화는 되지 않지만, 설정 없이 바로 작동합니다.
-======================================================================= */
+/* ===== Study Planner - LocalStorage Version (Calendar Bug Fixed) ===== */
 
-/* ---------- State ---------- */
-let tasks = [];         // 모든 할 일 데이터를 담는 배열 (메모리)
-let selectedISO = new Date().toISOString().slice(0, 10); // 오늘 날짜 기본 선택
-let currentEditingId = null; // 수정 중인 task의 ID 추적
+// ---------- State ----------
+let tasks = [];
+let selectedISO = new Date().toISOString().slice(0, 10);
+let currentEditingId = null;
+let cur = new Date(); cur.setDate(1);
 
-/* ---------- DOM refs ---------- */
+// ---------- DOM refs ----------
 const subject = document.getElementById("subject");
 const taskName = document.getElementById("taskName");
 const memo = document.getElementById("memo");
@@ -22,32 +20,21 @@ const next = document.getElementById("nextMon");
 const tip = document.getElementById("tooltip");
 const wdEl = document.getElementById("wd");
 
-/* ---------- Utils ---------- */
-// 고유 ID 생성 함수
-const uuid = () =>
-  (crypto.randomUUID && crypto.randomUUID()) ||
-  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+// ---------- Utils ----------
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }));
+const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10);
 
-// 날짜 객체를 'YYYY-MM-DD' 형식의 문자열로 변환
-const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  .toISOString().slice(0, 10);
-
-/* ---------- Data Persistence (LocalStorage) ---------- */
-// ✅ 데이터를 브라우저에 저장하는 함수
+// ---------- Data Persistence ----------
 function saveTasks() {
   localStorage.setItem('plannerTasks', JSON.stringify(tasks));
 }
 
-// ✅ 브라우저에서 데이터를 불러오는 함수
 function loadTasks() {
   const savedTasks = localStorage.getItem('plannerTasks');
   return savedTasks ? JSON.parse(savedTasks) : [];
 }
 
-/* ---------- CRUD (Create, Read, Update, Delete) ---------- */
+// ---------- CRUD ----------
 function addOrUpdateTask() {
   const name = taskName.value.trim();
   if (!name) {
@@ -55,7 +42,7 @@ function addOrUpdateTask() {
     return;
   }
 
-  if (currentEditingId) { // 수정 모드
+  if (currentEditingId) {
     const task = tasks.find(t => t.id === currentEditingId);
     if (task) {
       task.subject = subject.value.trim();
@@ -63,9 +50,9 @@ function addOrUpdateTask() {
       task.memo = memo.value.trim();
       task.date = selectedISO;
     }
-    currentEditingId = null; // 수정 모드 종료
-  } else { // 추가 모드
-    const newTask = {
+    currentEditingId = null;
+  } else {
+    tasks.push({
       id: uuid(),
       subject: subject.value.trim(),
       name,
@@ -73,14 +60,11 @@ function addOrUpdateTask() {
       date: selectedISO,
       done: false,
       createdAt: Date.now()
-    };
-    tasks.push(newTask);
+    });
   }
 
-  saveTasks(); // 변경사항 저장
-  renderAll(); // 화면 전체 새로고침
-  
-  // 입력 필드 초기화
+  saveTasks();
+  renderAll();
   subject.value = "";
   taskName.value = "";
   memo.value = "";
@@ -110,12 +94,11 @@ function enterEditMode(task) {
   memo.value = task.memo || "";
   selectedISO = task.date;
   currentEditingId = task.id;
-
   taskName.focus();
-  drawCalendar(); // 선택 날짜가 바뀌었을 수 있으므로 달력 다시 그림
+  drawCalendar();
 }
 
-/* ---------- UI Rendering ---------- */
+// ---------- UI Rendering ----------
 function renderAll() {
   renderTodos();
   drawCalendar();
@@ -131,11 +114,8 @@ function renderTodos() {
 
   for (const t of items) {
     const li = document.createElement("li");
-
     const chk = document.createElement("input");
-    chk.type = "checkbox";
-    chk.className = "chk";
-    chk.checked = t.done;
+    chk.type = "checkbox"; chk.className = "chk"; chk.checked = t.done;
     chk.onchange = () => toggleTask(t.id, chk.checked);
 
     const text = document.createElement("span");
@@ -145,22 +125,17 @@ function renderTodos() {
     text.textContent = `${dateStr}${subj}${t.name}${t.memo ? " · " + t.memo : ""}`;
 
     const editBtn = document.createElement("button");
-    editBtn.className = "edit-btn";
-    editBtn.textContent = "수정";
+    editBtn.className = "edit-btn"; editBtn.textContent = "수정";
     editBtn.onclick = () => enterEditMode(t);
 
     const delBtn = document.createElement("button");
-    delBtn.className = "del-btn";
-    delBtn.textContent = "삭제";
+    delBtn.className = "del-btn"; delBtn.textContent = "삭제";
     delBtn.onclick = () => deleteTask(t.id);
 
     li.append(chk, text, editBtn, delBtn);
     listEl.append(li);
   }
 }
-
-/* ---------- Calendar ---------- */
-let cur = new Date(); cur.setDate(1);
 
 function drawCalendar() {
   grid.innerHTML = "";
@@ -170,13 +145,12 @@ function drawCalendar() {
   const start = (new Date(y, m, 1).getDay() + 6) % 7;
   const last = new Date(y, m + 1, 0).getDate();
   const prevLast = new Date(y, m, 0).getDate();
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = iso(new Date());
 
-  const byDate = {};
-  for (const t of tasks) {
-    if (!t.date) continue;
-    (byDate[t.date] ||= []).push(t);
-  }
+  const byDate = tasks.reduce((acc, t) => {
+    if (t.date) (acc[t.date] ||= []).push(t);
+    return acc;
+  }, {});
 
   const addCell = (n, d, muted) => {
     const cell = document.createElement("div");
@@ -188,46 +162,45 @@ function drawCalendar() {
     if (byDate[dISO]?.length) cell.classList.add("hasTasks");
     if (dISO === selectedISO) cell.classList.add("selected");
 
-    cell.addEventListener("click", () => {
-      selectedISO = dISO;
-      drawCalendar();
-    });
+    cell.onclick = () => { selectedISO = dISO; drawCalendar(); };
 
-    cell.addEventListener("mouseenter", (e) => {
+    cell.onmouseenter = (e) => {
       const arr = byDate[dISO] || [];
       if (arr.length === 0) { tip.hidden = true; return; }
-      
       tip.innerHTML = `<ul>${arr.map(t => `<li style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${t.name}</li>`).join('')}</ul>`;
       tip.hidden = false;
-
-      const gap = 8, cellRect = e.currentTarget.getBoundingClientRect(), cardRect = grid.closest(".calendar").getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
-      let left = cellRect.left + cellRect.width / 2 - cardRect.left - tipRect.width / 2;
-      let top = cellRect.bottom - cardRect.top + gap;
-      left = Math.max(4, Math.min(left, cardRect.width - tipRect.width - 4));
-      if (top + tipRect.height > cardRect.height - 4) top = cellRect.top - cardRect.top - tipRect.height - gap;
+      const { top, left } = calculateTooltipPosition(e.currentTarget, tip);
       tip.style.left = `${left}px`;
       tip.style.top = `${top}px`;
-    });
-    cell.addEventListener("mouseleave", () => tip.hidden = true);
+    };
+    cell.onmouseleave = () => { tip.hidden = true; };
     grid.appendChild(cell);
   };
 
-  for (let i = 0; i < start; i++) addCell(prevLast - start + 1 + i, new Date(y, m - 1, prevLast - start + 1 + i), true);
+  for (let i = start - 1; i >= 0; i--) addCell(prevLast - i, new Date(y, m - 1, prevLast - i), true);
   for (let d = 1; d <= last; d++) addCell(d, new Date(y, m, d), false);
-  const tail = (7 - (start + last) % 7) % 7;
+  const tail = 42 - (start + last); // 6-week grid
   for (let i = 1; i <= tail; i++) addCell(i, new Date(y, m + 1, i), true);
 }
 
-/* ---------- Boot / Initializer ---------- */
+function calculateTooltipPosition(cell, tooltip) {
+    const gap = 8, cellRect = cell.getBoundingClientRect(), cardRect = grid.closest(".calendar").getBoundingClientRect(), tipRect = tooltip.getBoundingClientRect();
+    let left = cellRect.left + cellRect.width / 2 - cardRect.left - tipRect.width / 2;
+    let top = cellRect.bottom - cardRect.top + gap;
+    left = Math.max(4, Math.min(left, cardRect.width - tipRect.width - 4));
+    if (top + tipRect.height > cardRect.height - 4) top = cellRect.top - cardRect.top - tipRect.height - gap;
+    return { top, left };
+}
+
+// ---------- Initializer ----------
 function init() {
-  // 요일 헤더 그리기
+  wdEl.innerHTML = "";
   ["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
     const d = document.createElement("div");
     d.textContent = w;
     wdEl.appendChild(d);
   });
   
-  // 이벤트 리스너 연결
   dateBtn.onclick = addOrUpdateTask;
   taskName.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
   memo.addEventListener("keydown", e => e.key === "Enter" && addOrUpdateTask());
@@ -235,10 +208,8 @@ function init() {
   next.onclick = () => { cur.setMonth(cur.getMonth() + 1); drawCalendar(); };
   document.addEventListener("click", e => !grid.contains(e.target) && (tip.hidden = true));
 
-  // 데이터 불러와서 화면에 그리기
   tasks = loadTasks();
   renderAll();
 }
 
-// 앱 시작!
 init();
