@@ -113,15 +113,38 @@ function performDelete(id){
 }
 
 function enterEditMode(t){
-  subject.value = t.subject || "";
-  taskName.value = t.name || "";
-  memo.value = t.memo || "";
-  selectedISO = t.date;
-  dateInput.value = t.date || "";    // ✅ 편집 시 날짜 필드 채우기
+  // 1) '할 일 입력' 탭으로 전환
+  setTab('active');
+
+  // 2) 입력값 채우기
+  subject.value   = t.subject || "";
+  taskName.value  = t.name || "";
+  memo.value      = t.memo || "";
+
+  // 3) 날짜 동기화
+  selectedISO     = t.date || selectedISO;
+  if (typeof dateInput !== 'undefined' && dateInput) {
+    dateInput.value = t.date || "";
+  }
+
+  // 4) 편집 상태 지정
   currentEditingId = t.id;
-  taskName.focus();
+
+  // 5) 날짜 입력칸 포커스 + 하이라이트
+  if (dateInput) {
+    dateInput.focus({ preventScroll: true });
+    dateInput.classList.remove('pulse'); // 재적용 위해 제거
+    void dateInput.offsetWidth;          // 강제 리플로우
+    dateInput.classList.add('pulse');
+  }
+
+  // 6) 입력 박스가 화면에 잘 보이게
+  document.getElementById('inputBox')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // 7) 캘린더 선택일 강조 갱신
   drawCalendar();
 }
+
 
 // ---------- Render ----------
 const renderAll = () => { renderActiveList(); renderDoneList(); drawCalendar(); updateTabView(); };
