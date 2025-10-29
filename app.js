@@ -140,7 +140,23 @@ function renderActiveList(){
   listEl.innerHTML = "";
   hintEl.hidden = items.length !== 0;
 
-  items.forEach(t => {
+  if (items.length === 0) return;
+
+  const todayISO = iso(new Date());
+  let dividerInserted = false;
+
+  items.forEach((t, index) => {
+    const isFuture = t.date > todayISO;
+
+    // ✅ 미래 날짜 리스트에서 처음 등장할 때 Divider 삽입
+    if (isFuture && !dividerInserted) {
+      const sep = document.createElement("div");
+      sep.className = "today-separator";
+      sep.innerHTML = `<span>앞으로 할 일</span>`;
+      listEl.appendChild(sep);
+      dividerInserted = true;
+    }
+
     const li = document.createElement("li");
     const subj = t.subject ? `[${t.subject}] ` : "";
     const dateTx = t.date ? `${t.date.slice(5).replace('-', '/')} ` : "";
@@ -154,12 +170,12 @@ function renderActiveList(){
     `;
     li.querySelector(".chk").onchange = () => toggleTask(t.id);
     li.querySelector(".edit-btn").onclick = () => enterEditMode(t);
-    const delBtn = li.querySelector(".del-btn");
-    delBtn.onclick = (e) => { e.stopPropagation(); askDeleteConfirm(delBtn, t.id); };
+    li.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); askDeleteConfirm(li.querySelector(".del-btn"), t.id); };
 
     listEl.appendChild(li);
   });
 }
+
 
 function renderDoneList(){
   const items = tasks.filter(t => t.done).sort(sortByDateThenCreated);
