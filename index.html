@@ -1,41 +1,56 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Study Planner</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Planner · Leopard Edition</title>
+
+  <!-- Pretendard -->
+  <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
+    <!-- 캘린더 카드 -->
     <div class="card calendar">
       <div class="card-head">
         <strong id="calLabel">2025년 10월</strong>
         <nav class="nav">
-          <button id="prevMon" title="이전 달">‹</button>
-          <button id="nextMon" title="다음 달">›</button>
+          <button id="prevMon" title="이전 달" class="glass-btn" aria-label="이전 달">‹</button>
+          <button id="nextMon" title="다음 달" class="glass-btn" aria-label="다음 달">›</button>
         </nav>
       </div>
       <div class="weekday" id="wd"></div>
       <div class="grid" id="grid"></div>
 
+      <!-- hidden 제거: JS가 직접 제어 -->
       <div class="tooltip" id="tooltip"></div>
     </div>
 
-    <div class="card">
+    <!-- 할 일 카드 -->
+    <div class="card todo">
       <div class="input-box">
-        <input type="text" id="subject" placeholder="과목">
-        <input type="text" id="taskName" placeholder="과제명 (필수)">
-        <input type="text" id="memo" placeholder="메모">
-        <button class="icon-btn" id="dateBtn" title="선택한 날짜에 추가">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+        <input type="text" id="subject" placeholder="과목" aria-label="과목">
+        <input type="text" id="taskName" placeholder="과제명 (필수)" aria-label="과제명">
+        <input type="text" id="memo" placeholder="메모" aria-label="메모">
+        <button class="icon-btn glass-btn" id="dateBtn" title="선택한 날짜에 추가" aria-label="선택한 날짜에 추가">
+          <!-- calendar icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 2v4"/><path d="M16 2v4"/>
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M3 10h18"/>
+          </svg>
         </button>
       </div>
-      <ul id="todoList"></ul>
+
+      <ul id="todoList" aria-live="polite"></ul>
       <div class="hint" id="emptyHint">할 일이 없습니다.</div>
     </div>
   </div>
-  <script src="app.js"></script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>
