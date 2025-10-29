@@ -1,69 +1,70 @@
-/* ===== Study Planner - Transparent + Leopard (MZ Final) ===== */
+/* ===== Study Planner - Transparent + Leopard (MZ Final, Compact) ===== */
 :root{
-  --text:#2c2b29; 
-  --muted:#7a726a; 
-  --line:rgba(0,0,0,.10); 
+  --text:#2c2b29;
+  --muted:#7a726a;
+  --line:rgba(0,0,0,.10);
   --acc:#000;
-  --radius:16px; 
+  --radius:16px;
   --shadow:0 10px 24px rgba(0,0,0,.10);
-  --leopard:none;
+  --leopard:none; /* 외부 이미지 비활성화 */
+
+  /* Leopard (2번 사진 톤) */
+  --leo-pink:#f6c9cf;        /* 딸기우유 베이스 */
+  --leo-black:#161616;       /* 바깥 검정 반점 */
+  --leo-brown:#a55a2e;       /* 안쪽 갈색 반점 */
+  --leo-scale:180px;         /* 패턴 크기(↑ = 더 은은) */
+  --leo-border:12px;         /* 카드/입력/할일 테두리 두께 */
 }
 
 @media (prefers-color-scheme: dark){
   :root{
-    --text:#eee; 
-    --muted:#9a948e; 
-    --line:rgba(255,255,255,.15); 
+    --text:#eee;
+    --muted:#9a948e;
+    --line:rgba(255,255,255,.15);
     --acc:#fff;
   }
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
+*{ box-sizing:border-box }
+html,body{ height:100% }
 body{
   margin:0;
   background:transparent;
   color:var(--text);
-  font:14px/1.55 "Pretendard", sans-serif;
+  font:14px/1.55 "Pretendard", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
 }
 
 .app{
-  width:100%; 
-  max-width:760px; 
-  margin:0 auto; 
-  padding:24px 14px;
-  display:flex; 
-  flex-direction:column; 
-  gap:22px;
+  width:100%; max-width:760px; margin:0 auto; padding:24px 14px;
+  display:flex; flex-direction:column; gap:22px;
 }
 
-/* ===== 기본 카드 모습 (내부용) ===== */
+/* ===== Card (base) ===== */
 .card{
   position:relative;
   border-radius:var(--radius);
   padding:18px;
 }
 
-/* ===== 기본 버튼 ===== */
+/* ===== Buttons ===== */
 .glass-btn{
   border:1px solid var(--line);
   background:rgba(255,255,255,.35);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color:var(--text);
-  border-radius:10px; 
-  cursor:pointer; 
-  transition:.15s ease;
+  border-radius:10px; cursor:pointer; transition:.15s ease;
+  height:36px; min-width:36px; padding:0 10px;
 }
 .glass-btn:hover{ background:rgba(0,0,0,.16); color:#fff }
 .icon-btn{ display:inline-flex; align-items:center; justify-content:center }
 
-/* ===== 캘린더 ===== */
-.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
-.card-head strong{font-weight:800; font-size:16px}
+/* ===== Calendar ===== */
+.card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px }
+.card-head strong{ font-weight:800; font-size:16px }
 .nav{ display:flex; gap:8px }
 
-.weekday,.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px }
+.weekday, .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px }
 .weekday div{ font-size:12px; color:var(--muted); text-align:center; font-weight:600 }
 
 .cell{
@@ -83,27 +84,31 @@ body{
 }
 @media (prefers-color-scheme: dark){ .cell.selected{ color:#000; } }
 
-/* ===== Tooltip (작은 창) ===== */
+/* ===== Tooltip (small popup) =====
+   - 카드 내부 좌표 기준으로 정확히 표시되도록 z-index 최상단 유지
+   - 날짜 셀 hover 시 JS에서 top/left 지정 */
 .tooltip{
   position:absolute; z-index:9999 !important;
   padding:8px 12px;
   background:#000; color:#f6e9d0;
-  border-radius:10px; font-size:13px; line-height:1.45; max-width:240px;
+  border-radius:10px;
+  font-size:13px; line-height:1.45; max-width:240px;
   box-shadow:0 6px 18px rgba(0,0,0,.25);
   white-space:normal;
   opacity:0; pointer-events:none; transform:translateY(5px);
   transition:opacity .12s ease, transform .12s ease;
 }
 .tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0) }
+@media (prefers-color-scheme: dark){ .tooltip{ color:#000 }}
 
-/* ===== Todo (할 일) ===== */
+/* ===== Todo ===== */
 .input-box{
   display:grid; grid-template-columns:1fr 1fr 1fr auto;
   gap:10px; margin-bottom:12px;
 }
 .input-box input{
   border:1px solid var(--line); background:rgba(255,255,255,.35);
-  border-radius:12px; padding:12px; color:inherit; font:inherit;
+  border-radius:12px; padding:12px; color:inherit; font:inherit; outline-offset:2px;
 }
 .input-box input:focus{ border-color:var(--acc) }
 
@@ -117,8 +122,8 @@ body{
 #todoList .text{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600 }
 
 .chk{
-  width:18px; height:18px; appearance:none; cursor:pointer;
-  border:1.8px solid var(--muted); border-radius:6px;
+  width:18px; height:18px; appearance:none; display:grid; place-content:center; cursor:pointer;
+  border:1.8px solid var(--muted); border-radius:6px; background:transparent;
 }
 .chk:checked{ border-color:#000; background:#000 }
 .chk:checked::after{
@@ -126,8 +131,9 @@ body{
   clip-path: polygon(14% 44%, 0 62%, 41% 100%, 100% 22%, 82% 6%, 39% 72%);
   background:#f6e9d0;
 }
+@media (prefers-color-scheme: dark){ .chk:checked::after{ background:#000 } }
 
-.edit-btn,.del-btn{
+.edit-btn, .del-btn{
   border:0; background:transparent; cursor:pointer; font-weight:800;
   color:var(--muted); padding:4px 6px; border-radius:8px;
 }
@@ -136,42 +142,39 @@ body{
 
 .hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px }
 
-/* ================== Leopard (2번 사진 톤) ================== */
-:root{
-  --leo-pink:#f6c9cf;
-  --leo-black:#161616;
-  --leo-brown:#a55a2e;
-  --leo-scale:180px;
-  --leo-border:12px;
-}
-
-/* 레오파드 패턴 */
+/* ================== Leopard Rosette Pattern (2nd photo vibe) ================== */
+/* SVG 패턴(핑크 베이스 + 블랙/브라운 로젯) */
 :root{
   --leopard-roses: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>\
 <rect width='120' height='120' fill='%23f6c9cf'/>\
 <g fill='%23161616'>\
-<path d='M18 20c14-8 30 2 24 16s-30 12-34 0 2-16 10-16z'/>\
-<path d='M58 14c16-6 28 8 20 20s-28 10-30 0 4-18 10-20z'/>\
-<path d='M92 26c14-6 24 6 18 16s-22 10-26 0 2-14 8-16z'/>\
+  <path d='M18 20c14-8 30 2 24 16s-30 12-34 0 2-16 10-16z'/>\
+  <path d='M58 14c16-6 28 8 20 20s-28 10-30 0 4-18 10-20z'/>\
+  <path d='M92 26c14-6 24 6 18 16s-22 10-26 0 2-14 8-16z'/>\
+  <path d='M26 64c16-8 28 6 20 18s-26 10-30-2 4-14 10-16z'/>\
+  <path d='M66 58c14-6 24 6 18 16s-22 10-26 0 2-14 8-16z'/>\
+  <path d='M100 78c12-6 22 6 16 16s-20 10-24 0 2-14 8-16z'/>\
 </g>\
 <g fill='%23a55a2e'>\
-<path d='M30 26c6-4 12 2 9 7s-11 5-12 0 1-6 3-7z'/>\
-<path d='M68 22c6-3 10 4 8 8s-9 5-10 0 1-6 2-8z'/>\
+  <path d='M30 26c6-4 12 2 9 7s-11 5-12 0 1-6 3-7z'/>\
+  <path d='M68 22c6-3 10 4 8 8s-9 5-10 0 1-6 2-8z'/>\
+  <path d='M98 32c5-2 8 4 6 7s-7 4-8 0 1-5 2-7z'/>\
 </g>\
 </svg>");
 }
 
-/* 카드 — 테두리만 레오파드 */
+/* ===== Card: border-only leopard (calendar & todo) ===== */
 .card.calendar,
 .card.todo{
-  background:#fff;
+  background:#fff;         /* 내부는 새하얀 바탕 유지 */
   border:none;
   position:relative;
   box-shadow:var(--shadow);
 }
 .card.calendar > *, .card.todo > *{ position:relative; z-index:2; }
 
+/* 바깥 패턴 레이어 */
 .card.calendar::before,
 .card.todo::before{
   content:""; position:absolute; inset:0; z-index:0;
@@ -179,6 +182,7 @@ body{
   background:var(--leopard-roses);
   background-size:var(--leo-scale);
 }
+/* 안쪽 흰 패널(테두리만 남김) */
 .card.calendar::after,
 .card.todo::after{
   content:""; position:absolute; inset:var(--leo-border); z-index:1;
@@ -186,6 +190,7 @@ body{
   background:#fff;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
 }
+/* 패턴 레이어가 마우스 이벤트 가로채지 않게 */
 .card.calendar::before,
 .card.calendar::after,
 .card.todo::before,
@@ -193,7 +198,7 @@ body{
   pointer-events:none;
 }
 
-/* 입력칸 / 할일 항목 — 테두리만 레오파드 */
+/* ===== Inputs & Todo items: border-only leopard ===== */
 .input-box input{
   border:var(--leo-border) solid transparent;
   border-radius:12px;
@@ -207,7 +212,7 @@ body{
   background-size:var(--leo-scale);
 }
 
-/* 버튼 / 툴팁 — 레오파드 배경 */
+/* ===== Buttons & Tooltip: leopard background (glass overlay) ===== */
 .nav button,
 .icon-btn{
   border:1px solid rgba(0,0,0,.18);
@@ -224,6 +229,7 @@ body{
   color:#000;
 }
 
+/* Tooltip 위에 흰 베일 살짝 씌워 가독성 ↑ */
 .tooltip{
   background:
     linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)),
@@ -233,5 +239,36 @@ body{
   border:1px solid rgba(0,0,0,.12);
 }
 
-/* 캘린더 칸 유지 */
+/* ===== Compact Tweaks (여백·크기 다운, 기능 영향 없음) ===== */
+:root{ --leo-border:10px; } /* 테두리 조금 얇게 */
+
+.app{ padding:16px 12px; gap:14px; }
+.card{ padding:14px; border-radius:14px; }
+.card-head{ margin-bottom:6px; }
+.card-head strong{ font-size:15px; }
+
+.weekday, .grid{ gap:6px; }
+.weekday div{ font-size:11px; }
+.cell{ height:40px; border-radius:10px; }
+.cell.today{ border-width:1px; }
+
+.nav .glass-btn{ width:30px; height:30px; }
+.glass-btn{ height:32px; min-width:32px; padding:0 8px; border-radius:9px; }
+
+.input-box{ gap:8px; margin-bottom:10px; }
+.input-box input{ padding:10px; border-radius:10px; }
+
+#todoList li{ padding:8px 10px; border-radius:12px; gap:10px; }
+#todoList .text{ font-weight:500; font-size:13px; }
+
+.chk{ width:16px; height:16px; border-width:1.6px; }
+.chk:checked::after{ width:8px; height:8px; }
+
+.tooltip{
+  padding:6px 10px;
+  font-size:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+}
+
+/* 캘린더 셀 배경은 항상 투명 (흰 내부 카드와 조화) */
 .grid .cell{ background:transparent; }
