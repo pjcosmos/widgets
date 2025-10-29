@@ -1,7 +1,123 @@
-/* ...앞부분 기존 그대로 유지... */
+/* ===== Study Planner - A Mode + Tabs (Side-by-Side, Equal Height) ===== */
+:root{
+  --text:#2c2b29; --muted:#7a726a; --line:rgba(0,0,0,.10); --acc:#000;
+  --radius:12px; --shadow:0 8px 20px rgba(0,0,0,.10);
+  --panel-h: 360px;                /* 기본 패널 높이 (축소) */
+  --leo-pink:#f6c9cf; --leo-black:#161616; --leo-brown:#a55a2e;
+  --leo-scale:150px;               /* 패턴 스케일 */
+  --leo-border:8px;                /* 보더 두께 */
+  --base-fz:13px;                  /* 기본 폰트 크기 */
+}
+@media (prefers-color-scheme: dark){
+  :root{ --text:#eee; --muted:#9a948e; --line:rgba(255,255,255,.15); --acc:#fff; }
+}
 
-/* Input box (active tab only 표시) */
-/* ✅ 날짜 input 제거했으므로 열 구성 축소 */
+*{ box-sizing:border-box } html,body{ height:100% }
+body{
+  margin:0; background:transparent; color:var(--text);
+  font:var(--base-fz)/1.55 "Pretendard",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;
+}
+
+/* Layout */
+.app{
+  width:100%; max-width:820px;          /* 전체 폭 */
+  margin:0 auto; padding:12px 10px;
+  display:grid; gap:12px; grid-template-columns:1fr;
+}
+@media (min-width:760px){
+  .app{ grid-template-columns:1fr 1fr; align-items:start; }
+}
+
+/* Leopard Border (SVG 배경) */
+:root{
+  --leopard-roses:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>\
+<rect width='120' height='120' fill='%23f6c9cf'/>\
+<g fill='%23161616'>\
+  <path d='M18 20c14-8 30 2 24 16s-30 12-34 0 2-16 10-16z'/>\
+  <path d='M58 14c16-6 28 8 20 20s-28 10-30 0 4-18 10-20z'/>\
+  <path d='M92 26c14-6 24 6 18 16s-22 10-26 0 2-14 8-16z'/>\
+  <path d='M26 64c16-8 28 6 20 18s-26 10-30-2 4-14 10-16z'/>\
+  <path d='M66 58c14-6 24 6 18 16s-22 10-26 0 2-14 8-16z'/>\
+  <path d='M100 78c12-6 22 6 16 16s-20 10-24 0 2-14 8-16z'/>\
+</g>\
+<g fill='%23a55a2e'>\
+  <path d='M30 26c6-4 12 2 9 7s-11 5-12 0 1-6 3-7z'/>\
+  <path d='M68 22c6-3 10 4 8 8s-9 5-10 0 1-6 2-8z'/>\
+  <path d='M98 32c5-2 8 4 6 7s-7 4-8 0 1-5 2-7z'/>\
+</g>\
+</svg>");
+}
+
+/* Cards */
+.card{
+  position:relative; background:#fff; border:none; box-shadow:var(--shadow);
+  border-radius:var(--radius); padding:10px; display:flex; flex-direction:column;
+  min-height:var(--panel-h); height:var(--panel-h); overflow:hidden;
+}
+.card::before{
+  content:""; position:absolute; inset:0; z-index:0; border-radius:var(--radius);
+  background:var(--leopard-roses); background-size:var(--leo-scale); pointer-events:none;
+}
+.card::after{
+  content:""; position:absolute; inset:var(--leo-border); z-index:1;
+  border-radius:calc(var(--radius) - var(--leo-border)); background:#fff;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); pointer-events:none;
+}
+.card > *{ position:relative; z-index:2; }
+
+/* Header & Buttons */
+.card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px }
+.card-head strong{ font-weight:900; font-size:14px; letter-spacing:.2px; display:flex; align-items:center; gap:6px; }
+.card-head strong::after{ content:""; width:7px; height:7px; border-radius:50%; background:#111; }
+.nav{ display:flex; gap:6px }
+.glass-btn{
+  height:28px; min-width:28px; padding:0 6px; border-radius:8px; border:1px solid var(--line);
+  background:rgba(255,255,255,.35); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  color:var(--text); cursor:pointer; transition:.15s ease;
+}
+.nav .glass-btn{ width:28px; height:28px; }
+.glass-btn:hover{ background:rgba(0,0,0,.16); color:#fff }
+.icon-btn{ display:inline-flex; align-items:center; justify-content:center }
+
+/* Calendar */
+.weekday,.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px }
+.weekday{ margin-bottom:3px; }
+.weekday div{ font-size:10.5px; color:var(--muted); text-align:center; font-weight:700; letter-spacing:.2px; }
+.grid{ flex:1 1 auto; min-height:0; }
+.cell{
+  height:34px; border-radius:8px; border:1px solid transparent; display:flex; align-items:center; justify-content:center;
+  user-select:none; transition:.12s ease; position:relative; font-weight:600; font-size:12.5px;
+}
+.cell:hover{ background-color:rgba(0,0,0,.06) }
+.cell.muted{ color:var(--muted) }
+.cell.today{ font-weight:900; border-color:var(--muted) }
+.cell.hasTasks::after{ content:""; position:absolute; bottom:5px; width:5px; height:5px; border-radius:50%; background:#000; }
+.cell.selected{ background:#111; color:#f6e9d0; font-weight:900; border:none; }
+@media (prefers-color-scheme: dark){ .cell.selected{ color:#000 } }
+#calLabel{ font-variation-settings:"wght" 800; background:#111; color:#f6e9d0; padding:3px 8px; border-radius:999px; }
+
+/* Tooltip */
+.tooltip{
+  position:fixed; z-index:9999 !important; padding:6px 9px; border-radius:9px; font-size:12px; line-height:1.35;
+  background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)), var(--leopard-roses);
+  background-size:auto, var(--leo-scale); color:#111; border:1px solid rgba(0,0,0,.12);
+  box-shadow:0 4px 14px rgba(0,0,0,.18); white-space:normal; max-width:220px;
+  opacity:0; pointer-events:none; transform:translateY(5px); transition:opacity .12s ease, transform .12s ease;
+}
+.tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0) }
+
+/* Tabs */
+.tabs{ display:flex; gap:6px; margin-bottom:6px; flex:0 0 auto; }
+.tab{
+  flex:0 0 auto; padding:5px 9px; border-radius:999px; font-weight:800; font-size:11.5px;
+  border:1px solid var(--line); background:#fff; color:#333; cursor:pointer; transition:.15s ease;
+}
+.tab:hover{ background:rgba(0,0,0,.06) }
+.tab.active{ background:#111; color:#f6e9d0; border-color:#111; }
+
+/* Input box (active 탭에서만 표시) */
+/* 날짜 입력칸 제거 버전: [과목] [과제명] [메모] [버튼] */
 .input-box{
   display:grid; grid-template-columns:1fr 1.2fr 1fr auto;
   gap:6px; align-items:center; margin-bottom:6px; flex:0 0 auto;
@@ -14,4 +130,117 @@
   font:inherit; color:inherit;
 }
 
-/* ...나머지는 네가 쓰던 CSS 그대로 두면 돼(컴팩트 오버라이드 포함 가능)... */
+/* Add/Save 버튼 */
+.icon-btn#dateBtn{
+  width:36px; height:36px; padding:0; border:1px solid rgba(0,0,0,.18); border-radius:9px;
+  background:linear-gradient(rgba(255,255,255,.6),rgba(255,255,255,.2)), var(--leopard-roses);
+  background-size:auto, var(--leo-scale); color:#111; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  transition:.15s ease;
+}
+.icon-btn#dateBtn:hover{ filter:brightness(0.92); color:#000; }
+
+/* Lists (mutually exclusive) */
+#todoList, #doneList{
+  list-style:none; margin:0; padding:0; flex:1 1 auto; min-height:0; overflow-y:auto;
+  overscroll-behavior:contain; scroll-behavior:smooth;
+}
+#doneList[hidden], #todoList[hidden]{ display:none !important; }
+
+/* Scrollbars */
+#todoList::-webkit-scrollbar, #doneList::-webkit-scrollbar{ width:6px; }
+#todoList::-webkit-scrollbar-thumb, #doneList::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.25); border-radius:3px; }
+
+/* Items */
+#todoList li, #doneList li{
+  border:var(--leo-border) solid transparent; border-radius:10px; padding:7px 8px;
+  background:transparent padding-box, var(--leopard-roses) border-box; background-size:var(--leo-scale);
+  display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:8px; margin-bottom:6px;
+}
+.text{
+  white-space:nowrap; overflow-x:auto; overflow-y:hidden; text-overflow:clip;
+  display:block; font-weight:500; font-size:12.5px; padding-bottom:1px;
+}
+.text::-webkit-scrollbar{ height:4px; }
+.text::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.25); border-radius:3px; }
+
+/* Done look */
+#doneList li .text{ text-decoration: line-through; opacity:.6; }
+
+/* Controls */
+.chk{
+  width:16px; height:16px; appearance:none; display:grid; place-content:center; cursor:pointer;
+  border:1.4px solid var(--muted); border-radius:6px; background:transparent;
+}
+.chk:checked{ border-color:#000; background:#000 }
+.chk:checked::after{
+  content:""; width:8px; height:8px; background:#f6e9d0;
+  clip-path:polygon(14% 44%,0 62%,41% 100%,100% 22%,82% 6%,39% 72%);
+}
+@media (prefers-color-scheme: dark){ .chk:checked::after{ background:#000 } }
+
+.edit-btn,.del-btn{
+  border:0; background:transparent; cursor:pointer; font-weight:800; color:var(--muted);
+  padding:3px 5px; border-radius:7px; font-size:12.5px;
+}
+.edit-btn:hover{ background:rgba(0,0,0,.08); color:#000 }
+.del-btn{ color:#e57373 }
+
+.hint{ text-align:center; color:var(--muted); margin-top:4px; font-size:12.5px }
+#emptyHint[hidden], #emptyDoneHint[hidden]{ display:none !important; }
+
+/* Mini Preset (모바일 & 더 컴팩트) */
+@media (max-width:759.98px){
+  :root{ --panel-h: 300px; --leo-border:6px; --leo-scale:130px; --base-fz:12.5px; }
+  .card{ border-radius:10px; }
+  .weekday,.grid{ gap:4px; }
+  .cell{ height:30px; border-radius:7px; font-size:12px; }
+
+  /* 모바일: 과목 숨기고, [과제명][버튼] 한 줄, 메모는 다음 줄 전체 */
+  .input-box{
+    grid-template-columns:1fr auto;
+    gap:6px; margin-bottom:6px;
+  }
+  #subject{ display:none }
+  #taskName{ min-width:0 }
+  #memo{ grid-column:1 / -1; }
+  .icon-btn#dateBtn{ width:34px; height:34px; }
+}
+
+/* ===== COMPACT OVERRIDES (force smaller) ===== */
+/* CSS 우선순위/노션 임베드로 크기 유지될 때 마지막에 강제 축소 */
+.app{
+  max-width:680px !important;
+  padding:8px 8px !important;
+}
+.card{
+  padding:8px !important;
+  min-height:300px !important;
+  height:300px !important;
+  border-radius:10px !important;
+}
+.weekday, .grid{ gap:3px !important; }
+.cell{
+  height:28px !important;
+  border-radius:6px !important;
+  font-size:11.5px !important;
+}
+.card-head{ margin-bottom:4px !important; }
+.card-head strong{ font-size:13px !important; }
+#calLabel{ padding:2px 7px !important; }
+.tabs{ gap:5px !important; margin-bottom:5px !important; }
+.tab{ padding:4px 8px !important; font-size:11px !important; }
+.input-box{ gap:4px !important; margin-bottom:5px !important; }
+.input-box input{
+  padding:6px !important;
+  border-radius:7px !important;
+  font-size:12px !important;
+}
+.icon-btn#dateBtn{ width:30px !important; height:30px !important; }
+#todoList li, #doneList li{
+  padding:6px 7px !important;
+  gap:6px !important;
+  border-radius:9px !important;
+}
+.text{ font-size:11.5px !important; }
+.hint{ font-size:11.5px !important; }
+.chk{ width:15px !important; height:15px !important; }
