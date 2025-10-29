@@ -1,163 +1,140 @@
-/* ===== Study Planner - Transparent Notion Theme ===== */
-
+/* ===== Study Planner - Transparent Notion Theme (with Tooltip) ===== */
 :root {
-  --bg: transparent; /* ✅ 전체 배경 투명 */
-  --card-bg: rgba(245, 245, 245, 0.6); /* ✅ 카드 배경 (반투명) */
-  --card-bg-dark: rgba(45, 45, 45, 0.6); /* 다크모드용 카드 배경 */
-  --text: #222;
-  --text-dark: #eee;
-  --muted: #888;
+  --text: #333;
+  --muted: #999;
   --line: rgba(0, 0, 0, 0.1);
-  --line-dark: rgba(255, 255, 255, 0.1);
-  --acc: #333;
-  --acc-dark: #fff;
+  --acc: #000;
   --radius: 16px;
-  --shadow: 0 8px 20px rgba(0, 0, 0, .08);
+  --shadow: 0 4px 16px rgba(0, 0, 0, .08);
+}
+/* 다크모드 변수 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #eee;
+    --muted: #888;
+    --line: rgba(255, 255, 255, 0.15);
+    --acc: #fff;
+  }
 }
 
-/* 전역 */
 * { box-sizing: border-box; }
-html, body { margin: 0; background-color: var(--bg); }
 body {
   font: 14px/1.5 "Pretendard", sans-serif;
   color: var(--text);
+  background: transparent;
+  margin: 0;
 }
 
-/* ✅ 노션 다크모드 대응 */
-@media (prefers-color-scheme: dark) {
-  body { color: var(--text-dark); }
-  .card {
-    background: var(--card-bg-dark);
-    border: 1px solid var(--line-dark);
-  }
-  .cell, .input-box input, .icon-btn {
-    background-color: rgba(255,255,255,0.05);
-    border-color: var(--line-dark);
-  }
-  .nav button { background-color: rgba(255,255,255,0.1); border-color: var(--line-dark); color: var(--acc-dark);}
-  .chk { border-color: var(--line-dark); }
-  .chk:checked { border-color: var(--acc-dark); background: var(--acc-dark); }
-  .chk:checked::after { background: #000; }
-}
-
-
-/* 중앙 래퍼 */
 .app {
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 40px 14px;
-  display: flex; flex-direction: column; gap: 22px;
+  padding: 24px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-/* 카드 공통 */
 .card {
   width: 100%;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 18px;
-  position: relative;
-  overflow: hidden;
-  background: var(--card-bg); /* ✅ 반투명 배경 */
   border: 1px solid var(--line);
-  -webkit-backdrop-filter: blur(12px); /* ✅ 유리 효과 */
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
+  position: relative; /* ✅ 툴팁 위치 기준점 */
 }
 
-/* 헤더 */
 .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.card-head strong { font-weight: 800; }
+.card-head strong { font-weight: 800; font-size: 16px; }
 
-/* 네비 버튼 */
 .nav button {
   border: 1px solid var(--line);
-  background: rgba(255,255,255,0.5);
-  color: var(--acc);
-  width: 36px; height: 36px; border-radius: 12px; cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
   transition: .15s ease;
 }
-.nav button:hover { transform: translateY(-1px); background: #fff; }
+.nav button:hover { background: var(--line); }
 
-/* ===== Calendar ===== */
 .weekday, .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-.weekday div { font-size: 12px; color: var(--muted); text-align: center; font-weight: 600; }
+.weekday div { font-size: 12px; color: var(--muted); text-align: center; font-weight: 500; }
 
 .cell {
-  height: 50px; border-radius: 14px; border: 1px solid var(--line);
-  background: #fff;
+  height: 48px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   position: relative; user-select: none; transition: .12s ease;
+  border: 1px solid transparent;
 }
-.cell:hover { transform: translateY(-1px); }
-.cell.today { font-weight: 800; border-color: var(--acc); }
-.cell.muted { opacity: .5; color: var(--muted); }
+.cell:hover { background-color: var(--line); }
+.cell.muted { color: var(--muted); }
+.cell.today { font-weight: 700; border-color: var(--muted); }
 .cell.hasTasks::after {
-  content: ""; position: absolute; bottom: 6px; width: 6px; height: 6px;
+  content: ""; position: absolute; bottom: 6px; width: 5px; height: 5px;
   border-radius: 50%; background: var(--acc);
 }
 .cell.selected {
-  outline: 2px solid var(--acc);
-  outline-offset: 2px;
-  font-weight: 800;
+  background-color: var(--acc);
+  color: var(--bg, #fff);
+  font-weight: 700;
 }
+@media (prefers-color-scheme: dark) { .cell.selected { color: #000; }}
 
-/* 툴팁 */
+/* ✅ 툴팁 스타일 추가 */
 .tooltip {
-  position: absolute; z-index: 999; pointer-events: none;
-  background: #fff; color: var(--text);
-  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
-  box-shadow: var(--shadow); max-width: 260px;
-  opacity: 1; transition: opacity .1s ease, transform .1s ease;
+  position: absolute;
+  z-index: 10;
+  padding: 8px 12px;
+  background: var(--acc);
+  color: var(--bg, #fff);
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 200px;
+  pointer-events: none; /* 마우스 이벤트 통과 */
+  transition: opacity .1s ease, transform .1s ease;
+  opacity: 0;
+  transform: translateY(5px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  white-space: pre-wrap;
 }
-.tooltip[hidden] { opacity: 0; transform: translateY(4px); }
-.tooltip ul { margin: 0; padding: 0; list-style: none; }
-.tooltip li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
-.tooltip li:last-child { border-bottom: 0; }
+@media (prefers-color-scheme: dark) { .tooltip { color: #000; }}
+.tooltip:not([hidden]) {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-/* ===== Todo ===== */
 .input-box { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 12px; }
-.input-box input {
-  padding: 12px; border-radius: 14px; border: 1px solid var(--line);
-  background: #fff; outline: none; transition: all .12s ease;
+.input-box input, .icon-btn {
+  border: 1px solid var(--line);
+  background-color: transparent;
+  border-radius: 12px;
+  padding: 12px;
+  color: inherit;
+  font: inherit;
+  outline-offset: 2px;
 }
-.input-box input:focus { box-shadow: 0 0 0 3px color-mix(in oklab, var(--acc) 18%, transparent); border-color: var(--acc); }
-.icon-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 46px; height: 46px; border: 1px solid var(--line);
-  background: #fff; border-radius: 14px; cursor: pointer;
-  color: var(--acc); transition: .15s ease;
-}
-.icon-btn:hover { transform: translateY(-1px); }
+.input-box input:focus { border-color: var(--acc); }
 
-/* 리스트 */
+.icon-btn { width: 46px; height: 46px; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+
 #todoList { list-style: none; margin: 0; padding: 0; }
 #todoList li {
-  background: rgba(255,255,255,0.7); border: 1px solid var(--line); border-radius: 14px; padding: 12px;
-  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center;
-  gap: 12px; margin-bottom: 10px; transition: .15s ease;
+  background: transparent; border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px 12px; display: grid; grid-template-columns: auto 1fr auto auto;
+  align-items: center; gap: 12px; margin-bottom: 8px;
 }
-#todoList li:hover { transform: translateY(-1px); }
-#todoList .text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+#todoList .text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 
-/* 체크박스 */
 .chk {
   width: 18px; height: 18px; appearance: none;
-  border: 1.8px solid var(--line); border-radius: 6px;
+  border: 1.8px solid var(--muted); border-radius: 6px;
   display: grid; place-content: center; cursor: pointer;
 }
 .chk:checked { border-color: var(--acc); background: var(--acc); }
-.chk:checked::after { content: ""; width: 10px; height: 10px; clip-path: polygon(14% 44%, 0 62%, 41% 100%, 100% 22%, 82% 6%, 39% 72%); background: #fff; }
+.chk:checked::after { content: ""; width: 9px; height: 9px; clip-path: polygon(14% 44%, 0 62%, 41% 100%, 100% 22%, 82% 6%, 39% 72%); background: var(--bg, #fff); }
+@media (prefers-color-scheme: dark) { .chk:checked::after { background: #000; }}
 
-/* 수정/삭제 버튼 */
-.edit-btn, .del-btn { border: 0; background: transparent; cursor: pointer; font-weight: 800; padding: 4px; }
-.edit-btn { color: #4b4b4b; }
-.del-btn { color: #b32a2a; }
-
-/* 빈 상태 힌트 */
+.edit-btn, .del-btn { border: 0; background: transparent; cursor: pointer; font-weight: 700; color: var(--muted); padding: 4px; }
+.del-btn { color: #e57373; }
 .hint { text-align: center; color: var(--muted); margin-top: 6px; font-size: 13px; }
-
-/* 반응형 */
-@media (max-width: 560px) {
-  .input-box { grid-template-columns: 1fr 1fr auto; }
-  #memo { grid-column: 1 / -1; }
-}
