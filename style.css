@@ -244,3 +244,22 @@ body{
 .text{ font-size:11.5px !important; }
 .hint{ font-size:11.5px !important; }
 .chk{ width:15px !important; height:15px !important; }
+
+/* ───── Today Divider ───── */
+.today-separator {
+  margin: 10px 0;
+  border-top: 1px solid rgba(0,0,0,.15);
+  text-align:center;
+  position:relative;
+}
+.today-separator span{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  top:-7px;
+  background:#fff;
+  padding:0 6px;
+  font-size:11px;
+  color:var(--muted);
+}
+
