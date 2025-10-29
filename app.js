@@ -108,11 +108,11 @@ taskName.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addTaskQuick();
 });
 
+/* 목록 렌더링 (미완료만) */
 function renderTodos() {
-  const items = tasks.filter(t => !t.done)
-                     .sort((a,b)=>
-                       (a.date||"").localeCompare(b.date||"") ||
-                       (a.createdAt||0)-(b.createdAt||0));
+  const items = load()
+    .filter(t => !t.done)
+    .sort((a, b) => (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt);
 
   listEl.innerHTML = "";
   if (items.length === 0) {
@@ -124,26 +124,62 @@ function renderTodos() {
   for (const t of items) {
     const li = document.createElement("li");
 
+    // 완료 체크박스
     const chk = document.createElement("input");
     chk.type = "checkbox";
     chk.className = "chk";
     chk.title = "완료";
-    chk.onchange = () => toggleDone(t.id);
+    chk.onchange = () => {
+      const all = load();
+      const idx = all.findIndex(x => x.id === t.id);
+      if (idx > -1) {
+        all[idx].done = true;
+        save(all);
+        renderTodos();
+        drawCalendar();
+      }
+    };
 
+    // 텍스트
     const text = document.createElement("span");
     text.className = "text";
     const subj = t.subject ? `[${t.subject}] ` : "";
     text.textContent = `${subj}${t.name}${t.memo ? " · " + t.memo : ""}`;
 
+    // ⬅️ 수정 버튼 추가
+    const edit = document.createElement("button");
+    edit.className = "del";  // 같은 스타일 사용
+    edit.style.color = "#444"; // 삭제와 구분
+    edit.textContent = "수정";
+
+    edit.onclick = () => {
+      // 입력창에 값 복원
+      subject.value = t.subject || "";
+      taskName.value = t.name || "";
+      memo.value = t.memo || "";
+      selectedISO = t.date || selectedISO;
+
+      // 기존 항목 삭제한 뒤 다시 저장 → 수정 효과
+      save(load().filter(x => x.id !== t.id));
+      renderTodos();
+      drawCalendar();
+    };
+
+    // 삭제 버튼
     const del = document.createElement("button");
     del.className = "del";
     del.textContent = "삭제";
-    del.onclick = () => deleteTask(t.id);
+    del.onclick = () => {
+      save(load().filter(x => x.id !== t.id));
+      renderTodos();
+      drawCalendar();
+    };
 
-    li.append(chk, text, del);
+    li.append(chk, text, edit, del);
     listEl.append(li);
   }
 }
+
 
 /* ---------- Calendar ---------- */
 ["월","화","수","목","금","토","일"].forEach(w=>{
