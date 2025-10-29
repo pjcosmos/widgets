@@ -1,64 +1,60 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Study Planner</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css">
-  <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leopard Study Planner</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
+    // 여기에 자신의 Firebase 프로젝트 설정 코드를 붙여넣으세요.
+    const firebaseConfig = {
+      apiKey: "AIza...",
+      authDomain: "your-project-id.firebaseapp.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "...",
+      appId: "..."
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
+
 <body>
+
   <div class="app">
-
-    <!-- Calendar (위) -->
-    <section class="calendar card">
-      <header class="card-head">
-        <strong id="calLabel">—</strong>
-        <div class="nav">
-          <button id="prevMon" aria-label="이전 달">‹</button>
-          <button id="nextMon" aria-label="다음 달">›</button>
-        </div>
-      </header>
-
+    <div class="card calendar">
+      <div class="card-head">
+        <strong id="calLabel">2025년 10월</strong>
+        <nav class="nav">
+          <button id="prevMon" title="이전 달">‹</button>
+          <button id="nextMon" title="다음 달">›</button>
+        </nav>
+      </div>
       <div class="weekday" id="wd"></div>
       <div class="grid" id="grid"></div>
+      <div class="tooltip" id="tooltip" hidden></div>
+    </div>
 
-      <div id="tooltip" class="tooltip" hidden></div>
-    </section>
-
-    <!-- Todo (아래) -->
-    <section class="todo card">
+    <div class="card">
       <div class="input-box">
-        <input id="subject" type="text" placeholder="과목" aria-label="과목">
-        <input id="taskName" type="text" placeholder="과제명" aria-label="과제명">
-        <input id="memo" type="text" placeholder="메모 (선택)" aria-label="메모">
-
-        <!-- 날짜: 항상 보이는 슬림 필드 + 아이콘 -->
-        <div class="date-inline">
-          <button id="dateBtn" class="icon-btn" type="button" aria-label="오늘 날짜로 바로 추가">
-          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
-            <path d="M8 2v4M16 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          </button>
-        </div>
-        
-        <button id="addBtn" class="add" type="button">추가</button>
+        <input type="text" id="subject" placeholder="과목">
+        <input type="text" id="taskName" placeholder="과제명 (필수)">
+        <input type="text" id="memo" placeholder="메모" id="memo">
+        <button class="icon-btn" id="dateBtn" title="선택한 날짜에 추가">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+        </button>
       </div>
-      <div class="sync-row">
-        <button id="exportBtn" class="ghost">내보내기</button>
-        <label class="ghost">
-          가져오기
-          <input id="importFile" type="file" accept="application/json" hidden>
-        </label>
-      </div>
-
       <ul id="todoList"></ul>
-      <div id="emptyHint" class="hint">할 일이 없어요</div>
-    </section>
-
+      <div class="hint" id="emptyHint">할 일이 없습니다.</div>
+    </div>
   </div>
 
-  <script src="./app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
