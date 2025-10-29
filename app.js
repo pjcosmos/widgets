@@ -12,7 +12,6 @@ const subject      = document.getElementById("subject");
 const taskName     = document.getElementById("taskName");
 const memo         = document.getElementById("memo");
 const dateBtn      = document.getElementById("dateBtn");
-const dateInput    = document.getElementById("dateInput"); // ✅ 날짜 입력
 
 const listEl       = document.getElementById("todoList");
 const hintEl       = document.getElementById("emptyHint");
@@ -51,8 +50,8 @@ function addOrUpdateTask(){
   const name = taskName.value.trim();
   if (!name) return alert("과제명은 필수입니다.");
 
-  // ✅ dateInput 우선, 비어있으면 selectedISO
-  const chosenDate = (dateInput.value || selectedISO);
+  // ✅ 날짜는 항상 달력 선택값(selectedISO) 사용
+  const chosenDate = selectedISO;
 
   if (currentEditingId){
     const t = tasks.find(x => x.id === currentEditingId);
@@ -74,13 +73,10 @@ function addOrUpdateTask(){
       createdAt: Date.now()
     });
   }
-  // ✅ state 동기화
-  selectedISO = chosenDate;
   saveTasks();
   renderAll();
 
   subject.value = ""; taskName.value = ""; memo.value = "";
-  // 새로 추가할 때 날짜는 유지(연속 입력 편의)
   taskName.focus();
 }
 
@@ -112,39 +108,25 @@ function performDelete(id){
   renderAll();
 }
 
+// ✅ 수정 진입: 달력에서 날짜만 골라서 저장하게
 function enterEditMode(t){
-  // 1) '할 일 입력' 탭으로 전환
   setTab('active');
 
-  // 2) 입력값 채우기
-  subject.value   = t.subject || "";
-  taskName.value  = t.name || "";
-  memo.value      = t.memo || "";
+  subject.value  = t.subject || "";
+  taskName.value = t.name || "";
+  memo.value     = t.memo || "";
 
-  // 3) 날짜 동기화
-  selectedISO     = t.date || selectedISO;
-  if (typeof dateInput !== 'undefined' && dateInput) {
-    dateInput.value = t.date || "";
-  }
+  // 캘린더에 해당 날짜를 선택 표시
+  selectedISO       = t.date || selectedISO;
+  currentEditingId  = t.id;
 
-  // 4) 편집 상태 지정
-  currentEditingId = t.id;
-
-  // 5) 날짜 입력칸 포커스 + 하이라이트
-  if (dateInput) {
-    dateInput.focus({ preventScroll: true });
-    dateInput.classList.remove('pulse'); // 재적용 위해 제거
-    void dateInput.offsetWidth;          // 강제 리플로우
-    dateInput.classList.add('pulse');
-  }
-
-  // 6) 입력 박스가 화면에 잘 보이게
-  document.getElementById('inputBox')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  // 7) 캘린더 선택일 강조 갱신
+  // 입력칸으로 포커스, 캘린더 갱신
+  taskName.focus();
   drawCalendar();
-}
 
+  // (선택) 상단에 살짝 힌트 주고 싶다면:
+  // console.info('수정 모드: 달력에서 날짜를 클릭하면 그 날짜로 저장됩니다.');
+}
 
 // ---------- Render ----------
 const renderAll = () => { renderActiveList(); renderDoneList(); drawCalendar(); updateTabView(); };
@@ -153,7 +135,6 @@ function sortByDateThenCreated(a,b){
   return (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt;
 }
 
-// Active(미완료) 리스트
 function renderActiveList(){
   const items = tasks.filter(t => !t.done).sort(sortByDateThenCreated);
   listEl.innerHTML = "";
@@ -180,7 +161,6 @@ function renderActiveList(){
   });
 }
 
-// Done(완료) 리스트
 function renderDoneList(){
   const items = tasks.filter(t => t.done).sort(sortByDateThenCreated);
   doneListEl.innerHTML = "";
@@ -207,7 +187,7 @@ function renderDoneList(){
   });
 }
 
-// Calendar
+// Calendar: 클릭하면 항상 selectedISO 갱신(편집 중이면 그 날짜로 저장됨)
 function drawCalendar(){
   grid.innerHTML = "";
   label.textContent = new Intl.DateTimeFormat("ko", {year:"numeric", month:"long"}).format(cur);
@@ -242,9 +222,8 @@ function drawCalendar(){
 
     cell.textContent = d.getDate();
     cell.onclick = () => {
+      // ✅ 달력 클릭 = 날짜 설정
       selectedISO = dISO;
-      // ✅ 달력 클릭 시 dateInput 동기화
-      dateInput.value = dISO;
       drawCalendar();
     };
     grid.appendChild(cell);
@@ -275,7 +254,7 @@ function hideTooltip(){ tooltip.classList.remove('visible'); }
 
 // ---------- Tabs ----------
 function setTab(tab){
-  activeTab = tab; // 'active' or 'done'
+  activeTab = tab;
   updateTabView();
 }
 function updateTabView(){
@@ -293,15 +272,6 @@ function updateTabView(){
 // ---------- Init ----------
 function init(){
   selectedISO = iso(new Date());
-  dateInput.value = selectedISO;             // ✅ 초기값 세팅
-
-  // 날짜 입력 직접 변경 시에도 state 동기화
-  dateInput.addEventListener('change', () => {
-    if (dateInput.value){
-      selectedISO = dateInput.value;
-      drawCalendar();
-    }
-  });
 
   wdEl.innerHTML = "";
   ["월","화","수","목","금","토","일"].forEach(w=>{
