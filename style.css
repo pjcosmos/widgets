@@ -1,54 +1,49 @@
-/* ===== Study Planner - Leopard Luxe (AI Glow, Compact + Mini) ===== */
-
-/* ---------- Theme Tokens ---------- */
+/* ===== Study Planner - A Mode (Side-by-Side, Equal Height, Scrollable Todo) ===== */
 :root{
-  --text:#252422;
-  --muted:#847c74;
+  --text:#2c2b29;
+  --muted:#7a726a;
   --line:rgba(0,0,0,.10);
-  --acc:#111;
-  --radius:16px;
-  --shadow:0 10px 28px rgba(0,0,0,.10);
+  --acc:#000;
+  --radius:14px;
+  --shadow:0 10px 24px rgba(0,0,0,.10);
 
-  /* Leopard palette (2nd photo vibe) */
-  --leo-pink:#f6c9cf;        /* strawberry milk */
-  --leo-black:#161616;       /* outer rosette */
-  --leo-brown:#a55a2e;       /* inner rosette */
-  --leo-scale:180px;         /* pattern scale */
-  --leo-border:12px;         /* border thickness */
+  /* 패널(캘린더/할 일) 고정 높이: 필요 시 숫자만 조절 */
+  --panel-h: 420px;
 
-  /* Calendar accent */
-  --pill:#f3ece7;            /* subtle pill bg */
-  --ink:#0f0f0f;             /* deep ink */
-  --accent:#d86c6c;          /* soft coral accent for actions */
-  --glow: 0 10px 22px rgba(216,108,108,.20);
+  /* Leopard (2nd photo vibe) */
+  --leo-pink:#f6c9cf;
+  --leo-black:#161616;
+  --leo-brown:#a55a2e;
+  --leo-scale:180px;
+  --leo-border:10px;
 }
+
 @media (prefers-color-scheme: dark){
-  :root{
-    --text:#eee;
-    --muted:#a59e97;
-    --line:rgba(255,255,255,.18);
-    --acc:#fff;
-    --pill:#1f1f1f;
-    --ink:#fff;
-    --accent:#ff8a8a;
-    --glow: 0 10px 22px rgba(255,138,138,.25);
-  }
+  :root{ --text:#eee; --muted:#9a948e; --line:rgba(255,255,255,.15); --acc:#fff; }
 }
 
-/* ---------- Base ---------- */
 *{ box-sizing:border-box }
 html,body{ height:100% }
 body{
   margin:0; background:transparent; color:var(--text);
   font:14px/1.55 "Pretendard", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}
-.app{
-  width:100%; max-width:760px; margin:0 auto;
-  padding:16px 12px; display:flex; flex-direction:column; gap:16px;
 }
 
-/* ---------- Leopard SVG Pattern (inline, no network) ---------- */
+/* ============== App Layout ============== */
+/* 기본: 세로 스택, 넓으면 좌우 2열 자동 전환 */
+.app{
+  width:100%; max-width:960px; margin:0 auto;
+  padding:16px 12px; display:grid; gap:14px;
+  grid-template-columns: 1fr;             /* 모바일/좁은 화면 */
+}
+@media (min-width: 760px){
+  .app{
+    grid-template-columns: 1fr 1fr;       /* 좌우 배치 */
+    align-items: start;
+  }
+}
+
+/* ============== Leopard Border (border-only) ============== */
 :root{
   --leopard-roses: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>\
@@ -69,195 +64,187 @@ body{
 </svg>");
 }
 
-/* ---------- Cards (white inside, leopard border only) ---------- */
+/* ============== Cards (공통) ============== */
 .card{
-  position:relative; border:none; border-radius:var(--radius);
-  padding:16px; box-shadow:var(--shadow); background:#fff;
+  position:relative; background:#fff; border:none; box-shadow:var(--shadow);
+  border-radius:var(--radius); padding:12px; display:flex; flex-direction:column;
+  min-height: var(--panel-h); height: var(--panel-h); /* 동일 높이 */
+  overflow: hidden;             /* 내부 스크롤만 보이게 */
 }
-.card > *{ position:relative; z-index:2; }
+
+/* 두 카드 모두 ‘레오파드 테두리’ */
 .card::before{
-  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
-  border-radius:var(--radius); background:var(--leopard-roses); background-size:var(--leo-scale);
+  content:""; position:absolute; inset:0; z-index:0;
+  border-radius:var(--radius);
+  background:var(--leopard-roses); background-size:var(--leo-scale);
+  pointer-events:none;
 }
 .card::after{
-  content:""; position:absolute; inset:var(--leo-border); z-index:1; pointer-events:none;
-  border-radius:calc(var(--radius) - var(--leo-border));
-  background:#fff; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
+  content:""; position:absolute; inset:var(--leo-border); z-index:1;
+  border-radius:calc(var(--radius) - var(--leo-border)); background:#fff;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); pointer-events:none;
+}
+.card > *{ position:relative; z-index:2; }
+
+/* 캘린더 카드와 할 일 카드가 같은 높이이므로 grid에서 같게 배치됨 */
+
+/* ============== Header & Buttons ============== */
+.card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+.card-head strong{
+  font-weight:900; font-size:15px; letter-spacing:.2px;
+  display:flex; align-items:center; gap:8px;
+}
+/* 예쁜 월 타이틀 Pill */
+.card-head strong::after{
+  content:""; display:inline-block; width:8px; height:8px; border-radius:50%;
+  background:#111;
 }
 
-/* ---------- Header & Month Label ---------- */
-.card-head{
-  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;
-}
-#calLabel{
-  display:inline-flex; align-items:center; gap:.6ch;
-  padding:8px 14px; border-radius:999px;
-  background:var(--pill);
-  color:var(--ink); font-weight:900; letter-spacing:.2px;
-  line-height:1; position:relative;
-}
-/* “AI Glow” underlight */
-#calLabel::after{
-  content:""; position:absolute; inset:-2px; z-index:-1; border-radius:999px;
-  box-shadow:var(--glow); opacity:.55;
-}
-
-/* ---------- Buttons ---------- */
 .nav{ display:flex; gap:8px }
-.glass-btn,
-.icon-btn{
+.glass-btn{
+  height:30px; min-width:30px; padding:0 8px; border-radius:9px;
   border:1px solid var(--line);
-  background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
+  background:rgba(255,255,255,.35);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  color:var(--text); border-radius:12px; cursor:pointer; transition:.18s ease;
-  height:32px; min-width:32px; padding:0 8px; display:inline-flex; align-items:center; justify-content:center;
+  color:var(--text); cursor:pointer; transition:.15s ease;
 }
-.nav .glass-btn{ width:32px; }
-.glass-btn:hover,.icon-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.12) }
-.glass-btn:active,.icon-btn:active{ transform:translateY(0) scale(.98) }
+.nav .glass-btn{ width:30px; height:30px; }
+.glass-btn:hover{ background:rgba(0,0,0,.16); color:#fff }
+.icon-btn{ display:inline-flex; align-items:center; justify-content:center }
 
-/* ---------- Calendar Grid ---------- */
-.weekday,.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px }
-.weekday div{ font-size:11px; color:var(--muted); text-align:center; font-weight:700; letter-spacing:.2px }
+/* ============== Calendar ============== */
+.weekday, .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px }
+.weekday{ margin-bottom:4px; }
+.weekday div{ font-size:11px; color:var(--muted); text-align:center; font-weight:700; letter-spacing:.2px; }
+
+.grid{
+  /* 캘린더는 카드 내부 남은 높이를 꽉 채우도록 */
+  flex: 1 1 auto;
+  min-height: 0;              /* 내부 스크롤 방지용 */
+}
 
 .cell{
-  height:40px; border-radius:12px; border:1px solid transparent;
+  height:40px; border-radius:10px; border:1px solid transparent;
   display:flex; align-items:center; justify-content:center;
-  user-select:none; transition:.12s ease; position:relative; isolation:isolate;
+  user-select:none; transition:.12s ease; position:relative; font-weight:600;
 }
-.cell:hover{ background-color:rgba(0,0,0,.05) }
+.cell:hover{ background-color:rgba(0,0,0,.06) }
 .cell.muted{ color:var(--muted) }
-.cell.today{
-  font-weight:900;
-  outline:2px solid rgba(0,0,0,.10);
-  outline-offset:-2px;
-  background:linear-gradient(180deg, rgba(0,0,0,.04), transparent);
-}
+.cell.today{ font-weight:900; border-color:var(--muted) }
 .cell.hasTasks::after{
   content:""; position:absolute; bottom:6px; width:6px; height:6px;
   border-radius:50%; background:#000;
 }
-.cell.selected{
-  background:#0f0f0f; color:#f6e9d0; font-weight:900; border:none;
-  box-shadow: 0 6px 16px rgba(0,0,0,.18);
-}
+.cell.selected{ background:#111; color:#f6e9d0; font-weight:900; border:none; }
 @media (prefers-color-scheme: dark){ .cell.selected{ color:#000 } }
 
-/* ---------- Tooltip (small popup) ---------- */
-/* JS가 fixed 좌표로 배치. 시각만 고급스럽게 */
+/* 월 타이틀(상단)을 좀 더 예쁘게 */
+#calLabel{
+  font-variation-settings: "wght" 800;
+  background:#111; color:#f6e9d0; padding:4px 10px; border-radius:999px;
+}
+
+/* ============== Tooltip (작은 창) ============== */
+/* viewport 고정 좌표 → 셀 바로 위/아래 정확히 */
 .tooltip{
-  position:fixed; z-index:9999 !important;
-  padding:8px 10px; border-radius:12px; font-size:12px; line-height:1.4;
+  position: fixed; z-index: 9999 !important;
+  padding:6px 10px; border-radius:10px; font-size:12px; line-height:1.4;
   background:
-    linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.90)),
+    linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)),
     var(--leopard-roses);
   background-size:auto, var(--leo-scale);
-  color:#111; border:1px solid rgba(0,0,0,.10);
-  box-shadow:0 8px 22px rgba(0,0,0,.16);
+  color:#111; border:1px solid rgba(0,0,0,.12);
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
   white-space:normal; max-width:240px;
-  opacity:0; pointer-events:none; transform:translateY(6px);
-  transition:opacity .14s ease, transform .14s ease, filter .14s ease;
-  filter: saturate(.9);
+  opacity:0; pointer-events:none; transform:translateY(5px);
+  transition:opacity .12s ease, transform .12s ease;
 }
-.tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0); filter: saturate(1) }
+.tooltip.visible{ opacity:1; pointer-events:auto; transform:translateY(0) }
 
-/* ---------- Input Row (Subject / Task / Memo / Add) ---------- */
+/* ============== Todo (입력 고정 + 리스트만 스크롤) ============== */
 .input-box{
-  display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; margin-bottom:10px; align-items:center;
+  display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:8px;
+  align-items:center; margin-bottom:8px; flex: 0 0 auto;
 }
 .input-box input{
-  min-width:0; width:100%; padding:10px 12px; border-radius:12px;
-  border:var(--leo-border) solid transparent;
-  background:#fff padding-box, var(--leopard-roses) border-box; background-size:var(--leo-scale);
-  color:inherit; font:inherit; outline-offset:2px; transition:border-color .15s ease, box-shadow .15s ease;
+  min-width:0; width:100%; padding:10px; border-radius:10px;
+  border: var(--leo-border) solid transparent;
+  background:#fff padding-box, var(--leopard-roses) border-box;
+  background-size: var(--leo-scale);
+  font: inherit; color: inherit;
 }
-.input-box input:focus{ box-shadow:0 0 0 3px rgba(216,108,108,.18) }
-.icon-btn#dateBtn{ width:42px; height:42px; padding:0; border-radius:12px }
+.icon-btn#dateBtn{
+  width: 40px; height: 40px; padding: 0;
+  border:1px solid rgba(0,0,0,.18); border-radius:10px;
+  background:
+    linear-gradient(rgba(255,255,255,.6), rgba(255,255,255,.2)),
+    var(--leopard-roses);
+  background-size:auto, var(--leo-scale);
+  color:#111;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  transition:.15s ease;
+}
+.icon-btn#dateBtn:hover{ filter:brightness(0.92); color:#000; }
 
-/* ---------- Todo List ---------- */
-#todoList{ list-style:none; margin:0; padding:0 }
+/* 투두 리스트 영역: 카드 남은 높이를 전부 차지 + 내부 스크롤 */
+#todoList{
+  list-style:none; margin:0; padding:0;
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto;               /* 세로 스크롤로만 확장 */
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* 스크롤바 스타일 (크롬/사파리) */
+#todoList::-webkit-scrollbar{ width: 6px; }
+#todoList::-webkit-scrollbar-thumb{ background: rgba(0,0,0,.25); border-radius: 3px; }
+#todoList::-webkit-scrollbar-track{ background: transparent; }
+
+/* 리스트 아이템 */
 #todoList li{
   border:var(--leo-border) solid transparent; border-radius:12px; padding:8px 10px;
   background:transparent padding-box, var(--leopard-roses) border-box; background-size:var(--leo-scale);
   display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:10px; margin-bottom:8px;
 }
 #todoList .text{
-  white-space: nowrap;          /* 줄바꿈 금지 → 한 줄 유지 */
-  overflow-x: auto;             /* 가로 스크롤 */
-  overflow-y: hidden;           /* 세로 스크롤 안 생기게 */
-  text-overflow: none;          /* ... 생략 방지 */
-  display: block;               /* 스크롤 가능한 박스 */
-  padding-bottom: 2px;          /* 스크롤바 안겹치게 살짝 여유 */
-  scrollbar-width: thin;        /* 파이어폭스 */
+  white-space: nowrap; overflow-x: auto; overflow-y: hidden; text-overflow: clip;
+  display:block; font-weight:500; font-size:13px; padding-bottom:2px;
 }
+#todoList .text::-webkit-scrollbar{ height:4px; }
+#todoList .text::-webkit-scrollbar-thumb{ background: rgba(0,0,0,.25); border-radius:3px; }
+#todoList .text::-webkit-scrollbar-track{ background: transparent; }
 
-/* 크롬/사파리 전용 스크롤 세련되게 */
-#todoList .text::-webkit-scrollbar{
-  height: 4px;
-}
-#todoList .text::-webkit-scrollbar-thumb{
-  background: rgba(0,0,0,.25);
-  border-radius: 3px;
-}
-#todoList .text::-webkit-scrollbar-track{
-  background: transparent;
-}
-
-/* check */
 .chk{
   width:16px; height:16px; appearance:none; display:grid; place-content:center; cursor:pointer;
-  border:1.6px solid var(--muted); border-radius:6px; background:transparent; transition:all .12s ease;
+  border:1.6px solid var(--muted); border-radius:6px; background:transparent;
 }
 .chk:checked{ border-color:#000; background:#000 }
 .chk:checked::after{
-  content:""; width:8px; height:8px;
+  content:""; width:8px; height:8px; background:#f6e9d0;
   clip-path: polygon(14% 44%, 0 62%, 41% 100%, 100% 22%, 82% 6%, 39% 72%);
-  background:#f6e9d0;
 }
 @media (prefers-color-scheme: dark){ .chk:checked::after{ background:#000 } }
 
-/* actions */
-.edit-btn,.del-btn{
+.edit-btn, .del-btn{
   border:0; background:transparent; cursor:pointer; font-weight:800;
-  color:var(--muted); padding:4px 6px; border-radius:8px; transition:.12s ease;
+  color:var(--muted); padding:4px 6px; border-radius:8px;
 }
-.edit-btn:hover{ background:rgba(0,0,0,.06); color:#000 }
-.del-btn{ color:#d86c6c }
-.del-btn:hover{ background:rgba(216,108,108,.10) }
+.edit-btn:hover{ background:rgba(0,0,0,.08); color:#000 }
+.del-btn{ color:#e57373 }
 
-.hint{ text-align:center; color:var(--muted); margin-top:4px; font-size:12px }
+.hint{ text-align:center; color:var(--muted); margin-top:6px; font-size:13px }
 
-/* ---------- Mini Widget Preset (ultra compact) ---------- */
-.app.mini{ max-width:360px; padding:10px 8px; gap:10px; --leo-border:8px; }
-.app.mini .card{ padding:10px; border-radius:12px; box-shadow:0 6px 14px rgba(0,0,0,.08) }
-.app.mini .card::after{ inset:8px; border-radius:calc(12px - 8px) }
-.app.mini .card-head{ margin-bottom:4px }
-.app.mini #calLabel{ padding:6px 10px; font-size:12px }
-.app.mini .glass-btn{ height:26px; min-width:26px; padding:0 6px; border-radius:9px; font-size:12px }
-.app.mini .nav .glass-btn{ width:26px; height:26px }
-.app.mini .weekday,.app.mini .grid{ gap:4px }
-.app.mini .weekday div{ font-size:10px }
-.app.mini .cell{ height:28px; border-radius:8px; font-size:12px }
-.app.mini .cell.hasTasks::after{ width:4px; height:4px; bottom:4px }
-.app.mini .tooltip{ padding:6px 8px; font-size:11px; max-width:160px; box-shadow:0 3px 10px rgba(0,0,0,.15) }
-
-/* mini input grid: 1행(과목/과제/버튼) + 2행(메모 전체) */
-.app.mini .input-box{ grid-template-columns:1fr 1fr auto; grid-auto-rows:auto; gap:6px; margin-bottom:8px }
-.app.mini #memo{ grid-column:1 / span 3; grid-row:2; min-width:0 }
-.app.mini #dateBtn{ grid-column:3; grid-row:1; width:34px; height:34px }
-.app.mini #todoList li{ padding:6px 8px; border-radius:10px; gap:8px }
-.app.mini #todoList .text{ font-size:12px }
-.app.mini .chk{ width:14px; height:14px; border-width:1.4px }
-.app.mini .chk:checked::after{ width:7px; height:7px }
-.app.mini .edit-btn,.app.mini .del-btn{ font-size:12px; padding:3px 5px; border-radius:6px }
-
-/* ---------- Safety: avoid overflow in very narrow iframes ---------- */
-@media (max-width: 380px){
-  .app{ max-width:340px }
+/* ============== Mini Widget Preset (자동) ============== */
+@media (max-width: 759.98px){
+  :root{ --panel-h: 380px; --leo-border: 8px; }
+  .card{ border-radius:12px; }
+  .weekday, .grid{ gap:4px; }
+  .cell{ height:32px; border-radius:8px; font-size:12px; }
+  .input-box{ grid-template-columns: 1fr 1fr auto; }
+  #memo{ grid-column: 1 / span 3; }
+  .icon-btn#dateBtn{ width:36px; height:36px; }
 }
 
-/* ---------- Optional: slightly nicer focus rings ---------- */
-:where(button, [type="button"], [type="text"], input):focus{
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(15,15,15,.08);
-}
+/* ============== Safety ============== */
+/* 툴팁이 다른 레이어에 가려지지 않도록 */
+.tooltip{ z-index: 9999 !important; }
