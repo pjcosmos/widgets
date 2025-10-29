@@ -1,4 +1,4 @@
-/* ===== Study Planner - Transparent Notion (Tooltip Final Fix) ===== */
+/* ===== Study Planner - Final Version (Timezone & Tooltip Bug Fixed) ===== */
 
 // ---------- State ----------
 let tasks = [];
@@ -22,7 +22,16 @@ const tooltip = document.getElementById("tooltip");
 
 // ---------- Utils ----------
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }));
-const iso = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10);
+
+/**
+ * ✅ 날짜를 시간대 변환 없이 'YYYY-MM-DD' 형식으로 변환하는 함수 (오류 수정)
+ */
+const iso = (d) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 // ---------- Data Persistence ----------
 const saveTasks = () => localStorage.setItem('plannerTasks', JSON.stringify(tasks));
@@ -141,40 +150,40 @@ function drawCalendar() {
   }
 }
 
-// ✅ 툴팁 보여주기 함수 (수정)
 function showTooltip(cell, tasksForDay) {
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
   tooltip.classList.add('visible');
 
-  const cellRect = cell.getBoundingClientRect();
-  const calendarRect = cell.closest('.calendar').getBoundingClientRect();
-  
-  // 기본 위치: 셀의 아래쪽 중앙
-  let top = cellRect.bottom - calendarRect.top + 8;
-  let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
+  requestAnimationFrame(() => {
+    const cellRect = cell.getBoundingClientRect();
+    const calendarRect = cell.closest('.calendar').getBoundingClientRect();
+    
+    let top = cellRect.bottom - calendarRect.top + 8;
+    let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
 
-  // 화면 가장자리에 닿지 않도록 위치 보정
-  if (left < 5) left = 5;
-  if (left + tooltip.offsetWidth > calendarRect.width) {
-    left = calendarRect.width - tooltip.offsetWidth - 5;
-  }
-  
-  // 아래 공간이 부족하면 위로 이동
-  if (top + tooltip.offsetHeight > calendarRect.height) {
-    top = cellRect.top - calendarRect.top - tooltip.offsetHeight - 8;
-  }
-  
-  tooltip.style.top = `${top}px`;
-  tooltip.style.left = `${left}px`;
+    if (left < 5) left = 5;
+    if (left + tooltip.offsetWidth > calendarRect.width) {
+      left = calendarRect.width - tooltip.offsetWidth - 5;
+    }
+    
+    if (top + tooltip.offsetHeight > calendarRect.height - 10) {
+      top = cellRect.top - calendarRect.top - tooltip.offsetHeight - 8;
+    }
+    
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+  });
 }
 
-// ✅ 툴팁 숨기기 함수 (수정)
 function hideTooltip() {
   tooltip.classList.remove('visible');
 }
 
 // ---------- Initializer ----------
 function init() {
+  // selectedISO를 초기화할 때도 새로운 iso 함수 사용
+  selectedISO = iso(new Date());
+
   wdEl.innerHTML = "";
   ["월", "화", "수", "목", "금", "토", "일"].forEach(w => {
     const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
