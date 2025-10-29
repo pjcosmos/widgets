@@ -1,4 +1,4 @@
-/* ===== Study Planner - Transparent Notion Theme (with Tooltip) ===== */
+/* ===== Study Planner - Transparent Notion Theme (Tooltip Final Fix) ===== */
 :root {
   --text: #333;
   --muted: #999;
@@ -43,7 +43,7 @@ body {
   background: color-mix(in srgb, currentColor 5%, transparent);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  position: relative; /* ✅ 툴팁 위치 기준점 */
+  position: relative;
 }
 
 .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -81,7 +81,7 @@ body {
 }
 @media (prefers-color-scheme: dark) { .cell.selected { color: #000; }}
 
-/* ✅ 툴팁 스타일 추가 */
+/* ✅ 툴팁 스타일 수정 */
 .tooltip {
   position: absolute;
   z-index: 10;
@@ -90,17 +90,24 @@ body {
   color: var(--bg, #fff);
   border-radius: 8px;
   font-size: 13px;
-  max-width: 200px;
-  pointer-events: none; /* 마우스 이벤트 통과 */
-  transition: opacity .1s ease, transform .1s ease;
-  opacity: 0;
-  transform: translateY(5px);
+  line-height: 1.4;
+  max-width: 240px;
+  pointer-events: none;
   box-shadow: 0 4px 12px rgba(0,0,0,.15);
-  white-space: pre-wrap;
+  white-space: normal;
+  
+  /* ✅ 표시/숨김 제어 */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(5px);
+  transition: opacity .1s ease, transform .1s ease, visibility .1s ease;
 }
 @media (prefers-color-scheme: dark) { .tooltip { color: #000; }}
-.tooltip:not([hidden]) {
+
+/* ✅ .visible 클래스가 붙었을 때 보이도록 변경 */
+.tooltip.visible {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
 }
 
