@@ -147,32 +147,45 @@ function drawCalendar() {
 }
 
 // ✅ 툴팁 보여주기 함수 (최종 수정)
+// ✅ 툴팁 보여주기 (hidden 해제 후, 보이는 상태에서 크기 측정)
 function showTooltip(cell, tasksForDay) {
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
-  const cellRect = cell.getBoundingClientRect();
-  const calendarRect = cell.closest('.calendar').getBoundingClientRect();
-  
-  // 위치를 먼저 계산한 후, 보이게 만듭니다.
-  let top = cellRect.bottom - calendarRect.top + 8;
-  let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
-  
-  if (left < 5) left = 5;
-  if (left + tooltip.offsetWidth > calendarRect.width) {
-    left = calendarRect.width - tooltip.offsetWidth - 5;
-  }
-  if (top + tooltip.offsetHeight > calendarRect.height - 10) {
-    top = cellRect.top - calendarRect.top - tooltip.offsetHeight - 8;
-  }
-  
-  tooltip.style.top = `${top}px`;
-  tooltip.style.left = `${left}px`;
+
+  // 숨김 해제 + 가시화
+  tooltip.removeAttribute('hidden');
   tooltip.classList.add('visible');
+
+  // 보이는 상태에서 반드시 측정
+  const cellRect = cell.getBoundingClientRect();
+  const calendar = cell.closest('.calendar');
+  const calendarRect = calendar.getBoundingClientRect();
+  const ttRect = tooltip.getBoundingClientRect();
+
+  // 가운데 정렬 기본 좌표
+  let left = cellRect.left - calendarRect.left + (cellRect.width / 2) - (ttRect.width / 2);
+  let top  = cellRect.bottom - calendarRect.top + 8;
+
+  // 수평 경계 보정
+  if (left < 5) left = 5;
+  if (left + ttRect.width > calendarRect.width - 5) {
+    left = calendarRect.width - ttRect.width - 5;
+  }
+
+  // 세로 경계 보정(아래로 공간 없으면 위로 띄우기)
+  if (top + ttRect.height > calendarRect.height - 10) {
+    top = cellRect.top - calendarRect.top - ttRect.height - 8;
+  }
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top  = `${top}px`;
 }
 
-// ✅ 툴팁 숨기기 함수 (최종 수정)
+// ✅ 툴팁 숨기기 (다시 hidden으로)
 function hideTooltip() {
   tooltip.classList.remove('visible');
+  tooltip.setAttribute('hidden', '');
 }
+
 
 
 // ---------- Initializer ----------
