@@ -1,50 +1,50 @@
-/* ===== Study Planner - Leopard Edition (Tooltip + Delete Fix) ===== */
+/* ===== Study Planner - Leopard Edition (Final, Tooltip Offset + Delete Safe) ===== */
 
-// ---------- State ----------
+/* ---------- State ---------- */
 let tasks = [];
 let selectedISO = new Date().toISOString().slice(0, 10);
 let currentEditingId = null;
 let cur = new Date(); cur.setDate(1);
 
-// ---------- DOM refs ----------
-const subject = document.getElementById("subject");
+/* ---------- DOM refs ---------- */
+const subject  = document.getElementById("subject");
 const taskName = document.getElementById("taskName");
-const memo = document.getElementById("memo");
-const dateBtn = document.getElementById("dateBtn");
-const listEl = document.getElementById("todoList");
-const hintEl = document.getElementById("emptyHint");
-const grid = document.getElementById("grid");
-const label = document.getElementById("calLabel");
-const prev = document.getElementById("prevMon");
-const next = document.getElementById("nextMon");
-const wdEl = document.getElementById("wd");
-const tooltip = document.getElementById("tooltip");
+const memo     = document.getElementById("memo");
+const dateBtn  = document.getElementById("dateBtn");
+const listEl   = document.getElementById("todoList");
+const hintEl   = document.getElementById("emptyHint");
+const grid     = document.getElementById("grid");
+const label    = document.getElementById("calLabel");
+const prev     = document.getElementById("prevMon");
+const next     = document.getElementById("nextMon");
+const wdEl     = document.getElementById("wd");
+const tooltip  = document.getElementById("tooltip");
 
-// ---------- Utils ----------
+/* ---------- Utils ---------- */
 const uuid = () =>
   (crypto.randomUUID ? crypto.randomUUID()
    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-       const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+       const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
        return v.toString(16);
      }));
 
-const iso = (d) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+const iso = d => {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${dd}`;
 };
 
-// ---------- Data Persistence ----------
+/* ---------- Data Persistence ---------- */
 const saveTasks = () => localStorage.setItem('plannerTasks', JSON.stringify(tasks));
 const loadTasks = () => JSON.parse(localStorage.getItem('plannerTasks') || '[]');
 
-// ---------- CRUD ----------
-function addOrUpdateTask() {
+/* ---------- CRUD ---------- */
+function addOrUpdateTask(){
   const name = taskName.value.trim();
   if (!name) return alert("과제명은 필수입니다.");
 
-  if (currentEditingId) {
+  if (currentEditingId){
     const t = tasks.find(x => x.id === currentEditingId);
     if (t) Object.assign(t, {
       subject: subject.value.trim(),
@@ -64,6 +64,7 @@ function addOrUpdateTask() {
       createdAt: Date.now()
     });
   }
+
   saveTasks();
   renderAll();
   subject.value = ""; taskName.value = ""; memo.value = "";
@@ -74,12 +75,13 @@ function toggleTask(id){
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.done = !t.done;
-  saveTasks(); renderAll();
+  saveTasks();
+  renderAll();
 }
 
-// Notion 임베드에서 confirm 차단 → 두 번 클릭 확인 방식
-function askDeleteConfirm(btn, id) {
-  if (btn.dataset.confirming === "1") {
+/* Notion 임베드 환경: window.confirm 제한 → 2단계 클릭 확인 */
+function askDeleteConfirm(btn, id){
+  if (btn.dataset.confirming === "1"){
     performDelete(id);
     return;
   }
@@ -97,44 +99,48 @@ function askDeleteConfirm(btn, id) {
 
 function performDelete(id){
   tasks = tasks.filter(x => x.id !== id);
-  saveTasks(); renderAll();
+  saveTasks();
+  renderAll();
 }
 
 function enterEditMode(t){
-  subject.value = t.subject || "";
-  taskName.value = t.name || "";
-  memo.value = t.memo || "";
-  selectedISO = t.date;
+  subject.value   = t.subject || "";
+  taskName.value  = t.name || "";
+  memo.value      = t.memo || "";
+  selectedISO     = t.date;
   currentEditingId = t.id;
   taskName.focus();
   drawCalendar();
 }
 
-// ---------- Render ----------
+/* ---------- Render ---------- */
 const renderAll = () => { renderTodos(); drawCalendar(); };
 
 function renderTodos(){
   const items = tasks
     .filter(t => !t.done)
-    .sort((a,b) => (a.date || "").localeCompare(b.date || "") || a.createdAt - b.createdAt);
+    .sort((a,b)=>
+      (a.date || "").localeCompare(b.date || "") ||
+      a.createdAt - b.createdAt
+    );
 
   listEl.innerHTML = "";
   hintEl.style.display = items.length === 0 ? "block" : "none";
 
   items.forEach(t => {
     const li = document.createElement("li");
-    const subj = t.subject ? `[${t.subject}] ` : "";
+    const subj   = t.subject ? `[${t.subject}] ` : "";
     const dateTx = t.date ? `${t.date.slice(5).replace('-', '/')} ` : "";
     const memoTx = t.memo ? ` · ${t.memo}` : "";
 
     li.innerHTML = `
-      <input type="checkbox" class="chk" ${t.done ? "checked":""}>
+      <input type="checkbox" class="chk">
       <span class="text">${dateTx}${subj}${t.name}${memoTx}</span>
       <button class="edit-btn" title="수정">수정</button>
-      <button class="del-btn" title="삭제">삭제</button>
+      <button class="del-btn"  title="삭제">삭제</button>
     `;
 
-    li.querySelector(".chk").onchange = () => toggleTask(t.id);
+    li.querySelector(".chk").onchange     = () => toggleTask(t.id);
     li.querySelector(".edit-btn").onclick = () => enterEditMode(t);
 
     const delBtn = li.querySelector(".del-btn");
@@ -146,13 +152,13 @@ function renderTodos(){
 
 function drawCalendar(){
   grid.innerHTML = "";
-  label.textContent = new Intl.DateTimeFormat("ko", {year:"numeric", month:"long"}).format(cur);
+  label.textContent = new Intl.DateTimeFormat("ko", { year:"numeric", month:"long" }).format(cur);
   const todayISO = iso(new Date());
 
   const byDate = tasks.reduce((acc,t)=>{
     if (t.date) (acc[t.date] ||= []).push(t);
     return acc;
-  },{});
+  }, {});
 
   const y = cur.getFullYear();
   const m = cur.getMonth();
@@ -160,19 +166,21 @@ function drawCalendar(){
   const start = new Date(first);
   start.setDate(start.getDate() - (first.getDay() + 6) % 7);
 
-  for (let i=0;i<42;i++){
-    const d = new Date(start); d.setDate(start.getDate()+i);
+  for (let i=0; i<42; i++){
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
     const dISO = iso(d);
+
     const cell = document.createElement("div");
     cell.className = "cell";
-    if (d.getMonth() !== m) cell.classList.add("muted");
-    if (dISO === todayISO) cell.classList.add("today");
-    if (dISO === selectedISO) cell.classList.add("selected");
+    if (d.getMonth() !== m)      cell.classList.add("muted");
+    if (dISO === todayISO)       cell.classList.add("today");
+    if (dISO === selectedISO)    cell.classList.add("selected");
 
     const tasksForDay = byDate[dISO];
     if (tasksForDay && tasksForDay.length){
       cell.classList.add("hasTasks");
-      cell.addEventListener("mouseenter", (e)=> showTooltip(e.currentTarget, tasksForDay));
+      cell.addEventListener("mouseenter", ()=> showTooltip(cell, tasksForDay));
       cell.addEventListener("mouseleave", hideTooltip);
     }
 
@@ -182,49 +190,52 @@ function drawCalendar(){
   }
 }
 
-// ---------- Tooltip (hidden 제거 후 치수 측정) ----------
-// ✅ 날짜 셀 바로 아래에 뜨는 정확 좌표 계산
-function showTooltip(cell, tasksForDay) {
+/* ---------- Tooltip (offset 기반, 스크롤/스케일 안전) ---------- */
+function showTooltip(cell, tasksForDay){
   tooltip.innerHTML = tasksForDay.map(t => `• ${t.name}`).join('<br>');
 
+  // 기준 컨테이너: 캘린더 카드
   const cal = cell.closest('.calendar');
-  const cellRect = cell.getBoundingClientRect();
-  const calRect  = cal.getBoundingClientRect();
+  if (!cal) return;
 
-  // 먼저 보이게 했다가 치수 측정 후 위치 클램핑
+  // 기준 컨테이너 내부로 강제 이동 (상대 좌표 보장)
+  if (tooltip.parentElement !== cal) cal.appendChild(tooltip);
+
+  // 보이게 한 뒤 치수 측정
   tooltip.classList.add('visible');
-  // 툴팁 실제 너비/높이 측정
-  const ttWidth  = tooltip.offsetWidth;
-  const ttHeight = tooltip.offsetHeight;
+  const ttW = tooltip.offsetWidth;
+  const ttH = tooltip.offsetHeight;
 
-  // 기본 위치: 셀 바로 아래 중앙 정렬
-  let top  = (cellRect.bottom - calRect.top) + 6;
-  let left = (cellRect.left - calRect.left) + (cellRect.width - ttWidth) / 2;
+  // 상대좌표 (offset 기반)
+  const pad  = 6;
+  const baseL = cell.offsetLeft + (cell.offsetWidth / 2) - (ttW / 2);
+  let   baseT = cell.offsetTop  +  cell.offsetHeight + pad;
 
-  // 좌우 클램핑
-  const minLeft = 6;
-  const maxLeft = calRect.width - ttWidth - 6;
-  left = Math.max(minLeft, Math.min(left, maxLeft));
+  // 좌우 클램핑: 카드 바깥으로 안 나가게
+  let left = Math.max(pad, Math.min(baseL, cal.clientWidth - ttW - pad));
 
   // 아래로 넘치면 위로 뒤집기
-  if (top + ttHeight > calRect.height - 6) {
-    top = (cellRect.top - calRect.top) - ttHeight - 6;
+  if (baseT + ttH > cal.clientHeight - pad){
+    baseT = cell.offsetTop - ttH - pad;
   }
 
-  tooltip.style.top  = `${top}px`;
   tooltip.style.left = `${left}px`;
+  tooltip.style.top  = `${baseT}px`;
 }
 
 function hideTooltip(){
-  tooltip.classList.remove("visible");
+  tooltip.classList.remove('visible');
 }
 
-// ---------- Init ----------
+/* ---------- Init ---------- */
 function init(){
   selectedISO = iso(new Date());
+
   wdEl.innerHTML = "";
   ["월","화","수","목","금","토","일"].forEach(w=>{
-    const d = document.createElement("div"); d.textContent = w; wdEl.appendChild(d);
+    const d = document.createElement("div");
+    d.textContent = w;
+    wdEl.appendChild(d);
   });
 
   dateBtn.onclick = addOrUpdateTask;
